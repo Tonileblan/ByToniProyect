@@ -359,7 +359,9 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
         date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
-      const updatedReports = [newReport, ...studioResults];
+      // Garantizar que solo exista 1 informe de cada tipo (reemplaza el anterior si existía)
+      const otherReports = studioResults.filter(r => r.type !== reportType);
+      const updatedReports = [newReport, ...otherReports];
       setStudioResults(updatedReports);
       
       if (activeProject?.id) {
@@ -368,7 +370,7 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
       
       setViewingDocument(newReport);
       triggerCelebration();
-      showToast(`✨ ${reportType} generado con éxito`, 'success');
+      showToast(`✨ ${getCleanReportTitle(reportType)} generado con éxito`, 'success');
     } catch (error: any) {
       showToast(`No se pudo generar el reporte: ${error.message}`, 'error');
     } finally {
@@ -1079,23 +1081,23 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
 
         <div style={{ padding: '20px', overflowY: 'auto' }}>
           
-          {/* Highlighted Master Report Hero Box */}
+          {/* Clean Compact Master Report Row */}
           <div style={{ 
-            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.16) 0%, rgba(99, 102, 241, 0.1) 100%)', 
-            border: '1px solid rgba(139, 92, 246, 0.3)', 
-            padding: '16px', 
-            borderRadius: 'var(--radius-lg)',
-            marginBottom: '20px',
+            background: 'rgba(139, 92, 246, 0.08)', 
+            padding: '10px 12px', 
+            borderRadius: 'var(--radius-md)',
+            marginBottom: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '12px'
+            gap: '8px'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <FileCode2 size={22} color="#A78BFA" />
-              <div>
-                <div style={{ fontSize: '13px', color: '#C4B5FD', fontWeight: 700 }}>Informe Maestro</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Documento base para crear la App</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <FileCode2 size={16} color="#A78BFA" />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '12px', color: '#C4B5FD', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Maestro
+                </div>
               </div>
             </div>
             <button 
@@ -1103,129 +1105,154 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
               disabled={!!isGeneratingStudio}
               className="btn btn-primary" 
               style={{ 
-                padding: '6px 14px', 
+                padding: '4px 10px', 
                 fontSize: '11px', 
                 fontWeight: 600, 
                 height: 'auto',
                 whiteSpace: 'nowrap',
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)'
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+                border: 'none'
               }}
             >
-              {isGeneratingStudio === 'Informe Maestro' ? 'Generando...' : 'Generar'}
+              {isGeneratingStudio === 'Informe Maestro' ? 'Generando...' : studioResults.some(r => r.type === 'Informe Maestro') ? 'Actualizar' : 'Generar'}
             </button>
           </div>
 
-          {/* 4 Predefined Specialized Reports (Discreet, Compact, Half Size) */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
+          {/* 4 Predefined Specialized Reports (Borderless, Minimal, Compact) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             
             {/* 1. Interfaz UI y Paleta */}
             <button 
               onClick={() => handleGenerateReport('Informe de Interfaz (UI) y Paleta de Colores')} 
               disabled={!!isGeneratingStudio}
-              className="btn btn-secondary" 
               style={{ 
-                padding: '6px 10px', 
+                padding: '5px 6px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '8px', 
                 textAlign: 'left', 
-                background: 'var(--bg-card)', 
+                background: 'transparent', 
+                border: 'none',
                 fontSize: '11px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)'
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                transition: 'background 0.15s ease'
               }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <Palette size={14} color="#A855F7" />
+              <Palette size={13} color="#A855F7" />
               <span style={{ flex: 1, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 1. Interfaz (UI) y Paleta
               </span>
+              {studioResults.some(r => r.type.includes('Interfaz') || r.type.includes('Paleta')) && (
+                <Check size={12} color="#10B981" />
+              )}
             </button>
 
             {/* 2. Estructura y Sitemap */}
             <button 
               onClick={() => handleGenerateReport('Informe de Estructura y Mapa del Sitio (Sitemap)')} 
               disabled={!!isGeneratingStudio}
-              className="btn btn-secondary" 
               style={{ 
-                padding: '6px 10px', 
+                padding: '5px 6px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '8px', 
                 textAlign: 'left', 
-                background: 'var(--bg-card)', 
+                background: 'transparent', 
+                border: 'none',
                 fontSize: '11px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)'
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                transition: 'background 0.15s ease'
               }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <Map size={14} color="#38BDF8" />
+              <Map size={13} color="#38BDF8" />
               <span style={{ flex: 1, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 2. Estructura y Sitemap
               </span>
+              {studioResults.some(r => r.type.includes('Estructura') || r.type.includes('Sitemap')) && (
+                <Check size={12} color="#10B981" />
+              )}
             </button>
             
             {/* 3. Usabilidad UX y Accesibilidad */}
             <button 
               onClick={() => handleGenerateReport('Informe de Usabilidad (UX) y Accesibilidad')} 
               disabled={!!isGeneratingStudio}
-              className="btn btn-secondary" 
               style={{ 
-                padding: '6px 10px', 
+                padding: '5px 6px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '8px', 
                 textAlign: 'left', 
-                background: 'var(--bg-card)', 
+                background: 'transparent', 
+                border: 'none',
                 fontSize: '11px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)'
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                transition: 'background 0.15s ease'
               }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <ShieldCheck size={14} color="#10B981" />
+              <ShieldCheck size={13} color="#10B981" />
               <span style={{ flex: 1, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 3. Usabilidad (UX) y Accesibilidad
               </span>
+              {studioResults.some(r => r.type.includes('Usabilidad') || r.type.includes('Accesibilidad')) && (
+                <Check size={12} color="#10B981" />
+              )}
             </button>
 
             {/* 4. Tono, Voz y Orientación */}
             <button 
               onClick={() => handleGenerateReport('Informe de Tono, Voz y Orientación del Producto')} 
               disabled={!!isGeneratingStudio}
-              className="btn btn-secondary" 
               style={{ 
-                padding: '6px 10px', 
+                padding: '5px 6px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '8px', 
                 textAlign: 'left', 
-                background: 'var(--bg-card)', 
+                background: 'transparent', 
+                border: 'none',
                 fontSize: '11px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)'
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                transition: 'background 0.15s ease'
               }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <MessageSquare size={14} color="#F59E0B" />
+              <MessageSquare size={13} color="#F59E0B" />
               <span style={{ flex: 1, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 4. Tono, Voz y Orientación
               </span>
+              {studioResults.some(r => r.type.includes('Tono') || r.type.includes('Voz')) && (
+                <Check size={12} color="#10B981" />
+              )}
             </button>
 
           </div>
 
-          <div style={{ marginTop: '24px' }}>
-            <h4 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '12px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '6px' }}>
+          <div style={{ marginTop: '20px' }}>
+            <h4 style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '4px' }}>
               Resultados de Studio
             </h4>
             
             {isGeneratingStudio && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: 'var(--radius-md)', marginBottom: '12px' }}>
-                <RefreshCw size={14} style={{ animation: 'spin 1.5s linear infinite', color: '#8B5CF6' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: 'rgba(139, 92, 246, 0.1)', borderRadius: 'var(--radius-sm)', marginBottom: '8px' }}>
+                <RefreshCw size={12} style={{ animation: 'spin 1.5s linear infinite', color: '#8B5CF6' }} />
                 <span style={{ fontSize: '11px', color: '#8B5CF6', fontWeight: 500 }}>Generando {getCleanReportTitle(isGeneratingStudio)}...</span>
               </div>
             )}
 
             {studioResults.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {studioResults.map(res => {
                   const cleanTitle = getCleanReportTitle(res.type);
                   const isSelected = viewingDocument?.id === res.id;
@@ -1235,32 +1262,31 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
                       style={{ 
                         display: 'flex', 
                         flexDirection: 'column', 
-                        padding: '8px 10px', 
-                        background: isSelected ? 'rgba(139, 92, 246, 0.08)' : 'var(--bg-card)', 
-                        border: isSelected ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid var(--border-subtle)', 
-                        borderRadius: 'var(--radius-md)',
-                        gap: '4px',
+                        padding: '6px 8px', 
+                        background: isSelected ? 'rgba(139, 92, 246, 0.08)' : 'transparent', 
+                        borderBottom: '1px solid var(--border-subtle)', 
+                        borderRadius: 'var(--radius-sm)',
+                        gap: '2px',
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      {/* Top Row: Eye button at front + Clean Title */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                      {/* Top Row: Eye icon button in front + Clean Title */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                         <button 
                           onClick={() => setViewingDocument(res)}
-                          className="btn-icon" 
                           title="Ver informe"
                           style={{ 
-                            padding: '4px', 
-                            borderRadius: 'var(--radius-sm)',
-                            background: isSelected ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.04)',
-                            border: '1px solid var(--border-subtle)',
+                            padding: '2px', 
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             flexShrink: 0
                           }}
                         >
-                          <Eye size={13} color={isSelected ? '#ffffff' : 'var(--text-primary)'} />
+                          <Eye size={13} color={isSelected ? '#A78BFA' : 'var(--text-secondary)'} />
                         </button>
 
                         <div 
@@ -1268,9 +1294,9 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
                           style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
                         >
                           <div style={{ 
-                            fontSize: '12px', 
+                            fontSize: '11px', 
                             fontWeight: 600, 
-                            color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)', 
+                            color: isSelected ? '#A78BFA' : 'var(--text-primary)', 
                             whiteSpace: 'nowrap', 
                             overflow: 'hidden', 
                             textOverflow: 'ellipsis' 
@@ -1281,26 +1307,24 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
                       </div>
 
                       {/* Bottom Row: Timestamp on left, other buttons (Download & Delete) on bottom right */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: '26px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: '20px' }}>
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                           {res.date}
                         </div>
-                        <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                           <button 
                             onClick={(e) => handleDownloadReport(res, e)}
-                            className="btn-icon" 
                             title="Descargar .md" 
-                            style={{ padding: '2px 4px' }}
+                            style={{ padding: '2px', background: 'transparent', border: 'none', cursor: 'pointer' }}
                           >
-                            <Download size={12} color="var(--text-muted)" />
+                            <Download size={11} color="var(--text-muted)" />
                           </button>
                           <button 
                             onClick={(e) => handleDeleteReport(res.id, e)}
-                            className="btn-icon" 
                             title="Eliminar informe" 
-                            style={{ padding: '2px 4px' }}
+                            style={{ padding: '2px', background: 'transparent', border: 'none', cursor: 'pointer' }}
                           >
-                            <Trash2 size={12} color="#EF4444" />
+                            <Trash2 size={11} color="#EF4444" />
                           </button>
                         </div>
                       </div>
@@ -1310,8 +1334,8 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
               </div>
             ) : (
               !isGeneratingStudio && (
-                <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px', lineHeight: 1.5, padding: '16px 0' }}>
-                  <Sparkles size={18} style={{ margin: '0 auto 8px auto', opacity: 0.5 }} />
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px', lineHeight: 1.5, padding: '12px 0' }}>
+                  <Sparkles size={16} style={{ margin: '0 auto 6px auto', opacity: 0.5 }} />
                   Los resultados generados aparecerán aquí.<br/>
                   Haz clic arriba para generar.
                 </div>
