@@ -2,16 +2,19 @@ import React, { useState } from 'react';
 import { 
   Search, Plus, Sparkles, Moon, Sun, Bell, 
   FolderPlus, CheckSquare, BookOpen, ExternalLink,
-  HelpCircle, MessageSquare, Menu
+  HelpCircle, MessageSquare, Menu, Settings, LogOut, ChevronDown, User
 } from 'lucide-react';
-import { Project } from '../../types/project';
+import { Project, UserProfile } from '../../types/project';
 
 interface TopNavbarProps {
   currentProject: Project | null;
+  currentUser?: UserProfile;
   onOpenNewTask: () => void;
   onOpenNewProject: () => void;
   onOpenHelpChat?: () => void;
   onOpenCerebro?: () => void;
+  onOpenSettings?: () => void;
+  onLogout?: () => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   theme: 'dark' | 'light';
@@ -22,10 +25,13 @@ interface TopNavbarProps {
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({
   currentProject,
+  currentUser,
   onOpenNewTask,
   onOpenNewProject,
   onOpenHelpChat,
   onOpenCerebro,
+  onOpenSettings,
+  onLogout,
   searchQuery,
   onSearchChange,
   theme,
@@ -34,6 +40,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onToggleSidebar
 }) => {
   const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   return (
     <header style={{
@@ -219,33 +226,133 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
-        {/* User Profile Chip */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '4px 8px',
-          borderRadius: 'var(--radius-full)',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-subtle)'
-        }}>
-          <div style={{
-            width: '24px',
-            height: '24px',
-            borderRadius: '50%',
-            background: '#6366F1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '11px',
-            fontWeight: 700,
-            color: '#FFFFFF'
-          }}>
-            TG
-          </div>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
-            Toni
-          </span>
+        {/* User Account & Profile Dropdown */}
+        <div style={{ position: 'relative' }}>
+          <button 
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '4px 10px 4px 6px',
+              borderRadius: 'var(--radius-full)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              cursor: 'pointer',
+              color: 'inherit'
+            }}
+            title="Mi Cuenta y Configuración"
+          >
+            <div style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#FFFFFF',
+              boxShadow: '0 0 8px rgba(99, 102, 241, 0.4)'
+            }}>
+              {currentUser?.avatar || 'TG'}
+            </div>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              {currentUser?.nickname || 'Toni'}
+            </span>
+            <ChevronDown size={14} color="var(--text-muted)" />
+          </button>
+
+          {/* Dropdown Menu */}
+          {showUserMenu && (
+            <div 
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                width: '240px',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-medium)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-lg)',
+                padding: '8px',
+                zIndex: 100,
+                animation: 'fadeIn 0.2s ease-out'
+              }}
+            >
+              {/* User summary header */}
+              <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '6px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {currentUser?.name || 'Antonio Javier García García'}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                  {currentUser?.email || 'tonileblan@gmail.com'}
+                </div>
+                <div style={{ fontSize: '10px', color: '#8B5CF6', marginTop: '4px', fontWeight: 600 }}>
+                  {currentUser?.role || 'Lead System Architect'}
+                </div>
+              </div>
+
+              {/* Settings Action */}
+              {onOpenSettings && (
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    onOpenSettings();
+                  }}
+                  className="dropdown-item"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
+                >
+                  <Settings size={15} color="#8B5CF6" />
+                  <span>Configuración & IA</span>
+                </button>
+              )}
+
+              {/* Logout Action */}
+              {onLogout && (
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    onLogout();
+                  }}
+                  className="dropdown-item"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#EF4444',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    marginTop: '4px',
+                    borderTop: '1px solid var(--border-subtle)'
+                  }}
+                >
+                  <LogOut size={15} color="#EF4444" />
+                  <span>Cerrar Sesión</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>

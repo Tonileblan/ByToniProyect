@@ -1,7 +1,38 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+export const getGenAIClient = () => {
+  let key = '';
+  try {
+    const saved = localStorage.getItem('bytoni_user_settings_v2');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.geminiApiKey) key = parsed.geminiApiKey;
+    }
+  } catch (e) {
+    // ignore
+  }
+  if (!key) {
+    key = import.meta.env.VITE_GEMINI_API_KEY || '';
+  }
+
+  return {
+    apiKey: key,
+    genAI: (key && key.startsWith('AIzaSy')) ? new GoogleGenerativeAI(key) : null
+  };
+};
+
+export const getMasterPromptTemplate = () => {
+  try {
+    const saved = localStorage.getItem('bytoni_user_settings_v2');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.masterPromptTemplate) return parsed.masterPromptTemplate;
+    }
+  } catch (e) {
+    // ignore
+  }
+  return INFORME_MAESTRO_PROMPT_TEMPLATE;
+};
 
 // Curated Fallback Knowledge Base for Benchmarks, Complaints & User Needs (8-15 items per category)
 const getFallbackSources = (topic: string) => {
@@ -243,6 +274,8 @@ export const generateReportFromSources = async (
   directivesContext: string = ''
 ) => {
   const isMasterReport = reportType === 'Informe Maestro';
+  const { apiKey, genAI } = getGenAIClient();
+  const masterTemplate = getMasterPromptTemplate();
 
   if (!genAI || !apiKey.startsWith('AIzaSy')) {
     // Robust Fallback Report Generator following the exact structure
@@ -347,7 +380,7 @@ ${directivesContext || 'Directrices estándar del proyecto aplicadas.'}
   let prompt = '';
   if (isMasterReport) {
     prompt = `
-${INFORME_MAESTRO_PROMPT_TEMPLATE}
+${masterTemplate}
 
 A continuación tienes la información del proyecto a procesar:
 
@@ -386,8 +419,10 @@ Instrucciones:
 };
 
 export const chatWithBrain = async (message: string, historyMessages: {role: 'user' | 'assistant', content: string}[], sourcesContext: string) => {
+  const { apiKey, genAI } = getGenAIClient();
+
   if (!genAI || !apiKey.startsWith('AIzaSy')) {
-    return `**[Cerebro Central - Modo Asistente]** 🧠\n\nHe recibido tu consulta sobre: *"${message}"*.\n\nActualmente estoy utilizando el contexto de las fuentes indexadas. Para habilitar respuestas generativas en vivo de Google Gemini, asegúrate de configurar una clave de API de **Google AI Studio** (\`AIzaSy...\`) en tu archivo \`.env\` (\`VITE_GEMINI_API_KEY\`).\n\n¿Quieres que analicemos las directrices activas o generemos un informe técnico?`;
+    return `**[Cerebro Central - Modo Asistente]** 🧠\n\nHe recibido tu consulta sobre: *"${message}"*.\n\nActualmente estoy utilizando el contexto de las fuentes indexadas. Para habilitar respuestas generativas en vivo de Google Gemini, puedes ingresar tu clave de API de **Google AI Studio** (\`AIzaSy...\`) en el apartado **Configuración / Mi Cuenta**.\n\n¿Quieres que analicemos las directrices activas o generemos un informe técnico?`;
   }
 
   const model = genAI.getGenerativeModel({ 
@@ -437,6 +472,8 @@ Genera el código o la solución necesaria para esta tarea respetando las direct
 };
 
 export const searchSourcesWithAI = async (topic: string) => {
+  const { apiKey, genAI } = getGenAIClient();
+
   if (!genAI || !apiKey.startsWith('AIzaSy')) {
     // Return curated high-quality sources instantly
     return getFallbackSources(topic);

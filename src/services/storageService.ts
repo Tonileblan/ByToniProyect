@@ -1,5 +1,6 @@
-import { Project, Section, Task, DirectiveItem } from '../types/project';
+import { Project, Section, Task, DirectiveItem, UserProfile, UserSettings } from '../types/project';
 import { INITIAL_PROJECTS, INITIAL_SECTIONS, INITIAL_TASKS, INITIAL_DIRECTIVES } from '../data/initialData';
+import { INFORME_MAESTRO_PROMPT_TEMPLATE } from './aiService';
 
 const STORAGE_KEYS = {
   PROJECTS: 'bytoni_projects_v2',
@@ -7,10 +8,96 @@ const STORAGE_KEYS = {
   TASKS: 'bytoni_tasks_v2',
   DIRECTIVES: 'bytoni_directives_v2',
   ACTIVE_PROJECT: 'bytoni_active_project_id_v2',
-  THEME: 'bytoni_theme_mode_v2'
+  THEME: 'bytoni_theme_mode_v2',
+  USER: 'bytoni_current_user_v2',
+  SETTINGS: 'bytoni_user_settings_v2'
+};
+
+export const DEFAULT_USER: UserProfile = {
+  id: 'usr_toni',
+  name: 'Antonio Javier García García',
+  nickname: 'Toni',
+  email: 'tonileblan@gmail.com',
+  dni: '34799350M',
+  role: 'Lead System Architect & Product Designer',
+  avatar: 'TG',
+  bio: 'Metodología SDD, Clean Architecture y 5 Directrices Maestras Google Drive.',
+  isAuthenticated: true
+};
+
+export const DEFAULT_SETTINGS: UserSettings = {
+  geminiApiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
+  masterPromptTemplate: INFORME_MAESTRO_PROMPT_TEMPLATE,
+  selectedModel: 'gemini-1.5-flash',
+  theme: 'dark'
 };
 
 export const storageService = {
+  // --- User & Auth ---
+  getUser(): UserProfile {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.USER);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Error loading user from storage:', e);
+    }
+    this.saveUser(DEFAULT_USER);
+    return DEFAULT_USER;
+  },
+
+  saveUser(user: UserProfile): void {
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+  },
+
+  logoutUser(): void {
+    const user = this.getUser();
+    user.isAuthenticated = false;
+    this.saveUser(user);
+  },
+
+  loginAsToni(): UserProfile {
+    const user = { ...DEFAULT_USER, isAuthenticated: true };
+    this.saveUser(user);
+    return user;
+  },
+
+  // --- Settings & Prompts ---
+  getSettings(): UserSettings {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+      if (saved) {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+      }
+    } catch (e) {
+      console.error('Error loading settings from storage:', e);
+    }
+    return DEFAULT_SETTINGS;
+  },
+
+  saveSettings(settings: Partial<UserSettings>): UserSettings {
+    const current = this.getSettings();
+    const updated = { ...current, ...settings };
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
+    return updated;
+  },
+
+  getMasterPrompt(): string {
+    return this.getSettings().masterPromptTemplate || INFORME_MAESTRO_PROMPT_TEMPLATE;
+  },
+
+  saveMasterPrompt(prompt: string): void {
+    this.saveSettings({ masterPromptTemplate: prompt });
+  },
+
+  getGeminiApiKey(): string {
+    return this.getSettings().geminiApiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
+  },
+
+  saveGeminiApiKey(key: string): void {
+    this.saveSettings({ geminiApiKey: key });
+  },
+
+  // --- Projects, Sections, Tasks & Directives ---
   getProjects(): Project[] {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.PROJECTS);
@@ -91,6 +178,8 @@ export const storageService = {
       sections: this.getSections(),
       tasks: this.getTasks(),
       directives: this.getDirectives(),
+      settings: this.getSettings(),
+      user: this.getUser(),
       exportedAt: new Date().toISOString()
     };
     return JSON.stringify(backup, null, 2);
@@ -102,5 +191,7 @@ export const storageService = {
     localStorage.removeItem(STORAGE_KEYS.TASKS);
     localStorage.removeItem(STORAGE_KEYS.DIRECTIVES);
     localStorage.removeItem(STORAGE_KEYS.ACTIVE_PROJECT);
+    localStorage.removeItem(STORAGE_KEYS.SETTINGS);
   }
 };
+

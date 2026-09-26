@@ -3,7 +3,7 @@ import {
   Home, CheckCircle2, Inbox, FolderKanban, Plus, 
   BookOpen, Sparkles, Database, ExternalLink, HardDrive, 
   Layers, Shield, TrendingUp, Smartphone, Globe,
-  List, Kanban, Calendar, BarChart2, Clock
+  List, Kanban, Calendar, BarChart2, Clock, Settings
 } from 'lucide-react';
 import { Project } from '../../types/project';
 
@@ -16,6 +16,7 @@ interface SidebarProps {
   onSelectMainView: (view: 'dashboard' | 'my_tasks' | 'project' | 'directives' | 'ai_studio') => void;
   onSelectProjectTab?: (tab: any) => void;
   onOpenNewProject: () => void;
+  onOpenSettings?: () => void;
   totalPendingTasks: number;
 }
 
@@ -28,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectMainView,
   onSelectProjectTab,
   onOpenNewProject,
+  onOpenSettings,
   totalPendingTasks
 }) => {
   return (
@@ -247,6 +249,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Google Drive Status Footer */}
+      {/* Bottom Settings Button */}
+      {onOpenSettings && (
+        <button
+          onClick={onOpenSettings}
+          className="nav-item"
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '8px 12px',
+            marginBottom: '10px',
+            fontSize: '13px',
+            fontWeight: 500,
+            borderRadius: 'var(--radius-md)',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            color: 'var(--text-secondary)'
+          }}
+        >
+          <Settings size={16} color="var(--text-muted)" />
+          <span>Configuración</span>
+        </button>
+      )}
+
       <div style={{
         padding: '12px',
         borderRadius: 'var(--radius-md)',

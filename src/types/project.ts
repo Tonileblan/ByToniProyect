@@ -182,3 +182,23 @@ export interface FilterOptions {
   tag: string | 'all';
   appTypeFilter?: string | 'all';
 }
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  nickname: string;
+  email: string;
+  dni: string;
+  role: string;
+  avatar: string;
+  bio?: string;
+  isAuthenticated: boolean;
+}
+
+export interface UserSettings {
+  geminiApiKey: string;
+  masterPromptTemplate: string;
+  selectedModel: string;
+  theme: 'dark' | 'light';
+}
+

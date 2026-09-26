@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Project, Section, Task, DirectiveItem, ViewTab, FilterOptions, TaskStatus, TaskPriority } from './types/project';
-import { storageService } from './services/storageService';
+import { Project, Section, Task, DirectiveItem, ViewTab, FilterOptions, TaskStatus, TaskPriority, UserProfile } from './types/project';
+import { storageService, DEFAULT_USER } from './services/storageService';
 import { feedbackService, AppFeedbackPayload } from './services/feedbackService';
 import { TopNavbar } from './components/layout/TopNavbar';
 import { Sidebar } from './components/layout/Sidebar';
@@ -19,6 +19,8 @@ import { NewProjectWizard } from './presentation/components/projects/NewProjectW
 import { NewTaskModal } from './components/tasks/NewTaskModal';
 import { AICopilotModal } from './components/common/AICopilotModal';
 import { AppHelpChatModal } from './components/common/AppHelpChatModal';
+import { LoginView } from './components/auth/LoginView';
+import { SettingsModal } from './components/settings/SettingsModal';
 import { triggerCelebration } from './common/ConfettiCelebration';
 
 export function App() {
@@ -35,6 +37,8 @@ export function App() {
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [isHelpChatModalOpen, setIsHelpChatModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => storageService.getUser());
   const [isAdminMode, setIsAdminMode] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
@@ -392,6 +396,10 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
 
   const totalPendingTasks = tasks.filter(t => t.status !== 'completed').length;
 
+  if (!currentUser?.isAuthenticated) {
+    return <LoginView onLoginSuccess={(user) => setCurrentUser(user)} />;
+  }
+
   return (
     <div className="app-container">
       {/* Left Sidebar */}
@@ -405,6 +413,7 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
           onSelectMainView={(v) => setActiveMainView(v)}
           onSelectProjectTab={(t) => setActiveProjectTab(t)}
           onOpenNewProject={() => setIsNewProjectModalOpen(true)}
+          onOpenSettings={() => setIsSettingsModalOpen(true)}
           totalPendingTasks={totalPendingTasks}
         />
       )}
@@ -414,10 +423,16 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
         {/* Top Navbar */}
         <TopNavbar
           currentProject={activeProject}
+          currentUser={currentUser}
           onOpenNewTask={() => setIsNewTaskModalOpen(true)}
           onOpenNewProject={() => setIsNewProjectModalOpen(true)}
           onOpenHelpChat={() => setIsHelpChatModalOpen(true)}
           onOpenCerebro={() => setActiveMainView('ai_studio')}
+          onOpenSettings={() => setIsSettingsModalOpen(true)}
+          onLogout={() => {
+            storageService.logoutUser();
+            setCurrentUser(prev => ({ ...prev, isAuthenticated: false }));
+          }}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           theme={theme}
@@ -586,6 +601,19 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
           onNewFeedbackTask={handleNewFeedbackTask}
         />
       )}
+
+      {/* Settings & User Account Modal */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        currentUser={currentUser}
+        onUserUpdate={(updated) => setCurrentUser(updated)}
+        onLogout={() => {
+          storageService.logoutUser();
+          setCurrentUser(prev => ({ ...prev, isAuthenticated: false }));
+          setIsSettingsModalOpen(false);
+        }}
+      />
     </div>
   );
 }
