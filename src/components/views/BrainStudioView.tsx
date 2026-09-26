@@ -163,6 +163,22 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
     });
   };
 
+  const handleToggleSelectAllStudySources = () => {
+    if (selectedStudySources.size === studySourcesFound.length && studySourcesFound.length > 0) {
+      setSelectedStudySources(new Set());
+    } else {
+      setSelectedStudySources(new Set(studySourcesFound.map(s => s.id)));
+    }
+  };
+
+  const handleToggleSelectAllWebResults = () => {
+    if (selectedWebResults.size === webSearchResults.length && webSearchResults.length > 0) {
+      setSelectedWebResults(new Set());
+    } else {
+      setSelectedWebResults(new Set(webSearchResults.map(s => s.id)));
+    }
+  };
+
   const handleSendToBrain = () => {
     const newSources: SourceItem[] = Array.from(selectedStudySources).map(id => {
       const res = studySourcesFound.find(r => r.id === id)!;
@@ -412,7 +428,28 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
               {searchTab === 'queries' && activeStudyType && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Fuentes Encontradas</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Fuentes Encontradas</h4>
+                      {studySourcesFound.length > 0 && !isSearchingStudy && (
+                        <button 
+                          type="button"
+                          onClick={handleToggleSelectAllStudySources}
+                          className="btn btn-secondary"
+                          style={{ 
+                            fontSize: '12px', 
+                            padding: '4px 12px', 
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--border-medium)',
+                            background: selectedStudySources.size === studySourcesFound.length ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+                            color: selectedStudySources.size === studySourcesFound.length ? '#38BDF8' : 'var(--text-secondary)'
+                          }}
+                        >
+                          {selectedStudySources.size === studySourcesFound.length && studySourcesFound.length > 0 
+                            ? 'Deseleccionar todo' 
+                            : 'Seleccionar todo'}
+                        </button>
+                      )}
+                    </div>
                     {selectedStudySources.size > 0 && <button onClick={handleSendToBrain} className="btn btn-primary">Añadir {selectedStudySources.size} fuentes</button>}
                   </div>
                   {isSearchingStudy ? (
@@ -473,7 +510,29 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
                      <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><RefreshCw size={24} style={{ animation: 'spin 1s linear infinite' }} /></div>
                   ) : webSearchResults.length > 0 ? (
                     <>
-                      {selectedWebResults.size > 0 && <button onClick={handleAddSelectedWebSources} className="btn btn-primary" style={{ alignSelf: 'flex-end' }}>Añadir {selectedWebResults.size} fuentes</button>}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Resultados de Búsqueda</h4>
+                          <button 
+                            type="button"
+                            onClick={handleToggleSelectAllWebResults}
+                            className="btn btn-secondary"
+                            style={{ 
+                              fontSize: '12px', 
+                              padding: '4px 12px', 
+                              borderRadius: 'var(--radius-sm)',
+                              border: '1px solid var(--border-medium)',
+                              background: selectedWebResults.size === webSearchResults.length ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                              color: selectedWebResults.size === webSearchResults.length ? '#10B981' : 'var(--text-secondary)'
+                            }}
+                          >
+                            {selectedWebResults.size === webSearchResults.length && webSearchResults.length > 0 
+                              ? 'Deseleccionar todo' 
+                              : 'Seleccionar todo'}
+                          </button>
+                        </div>
+                        {selectedWebResults.size > 0 && <button onClick={handleAddSelectedWebSources} className="btn btn-primary">Añadir {selectedWebResults.size} fuentes</button>}
+                      </div>
                       {webSearchResults.map(res => {
                         const domain = res.url.split('/')[2] || 'example.com';
                         return (
