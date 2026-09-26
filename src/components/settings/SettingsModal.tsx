@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Key, Sparkles, User, FileCode2, Save, RotateCcw, 
-  Check, CheckCircle2, Shield, Download, RefreshCw, AlertCircle, Eye, EyeOff
+  Check, CheckCircle2, Shield, Download, RefreshCw, AlertCircle, Eye, EyeOff,
+  Palette, Map, ShieldCheck, MessageSquare, Layers
 } from 'lucide-react';
-import { UserProfile, UserSettings } from '../../types/project';
+import { UserProfile, UserSettings, ReportPromptsConfig } from '../../types/project';
 import { storageService, DEFAULT_USER, DEFAULT_SETTINGS } from '../../services/storageService';
-import { INFORME_MAESTRO_PROMPT_TEMPLATE } from '../../services/aiService';
+import { DEFAULT_REPORT_PROMPTS } from '../../services/aiService';
 import { triggerCelebration } from '../../common/ConfettiCelebration';
 
 interface SettingsModalProps {
@@ -23,12 +24,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUserUpdate,
   onLogout
 }) => {
-  const [activeTab, setActiveTab] = useState<'ia' | 'prompt' | 'profile' | 'backup'>('ia');
+  const [activeTab, setActiveTab] = useState<'ia' | 'prompts' | 'profile' | 'backup'>('ia');
+  const [selectedPromptKey, setSelectedPromptKey] = useState<keyof ReportPromptsConfig>('informeMaestro');
   
   // Settings state
   const [geminiApiKey, setGeminiApiKey] = useState('');
-  const [masterPrompt, setMasterPrompt] = useState('');
   const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
+  const [prompts, setPrompts] = useState<ReportPromptsConfig>(DEFAULT_REPORT_PROMPTS);
   const [showApiKey, setShowApiKey] = useState(false);
   const [isTestingKey, setIsTestingKey] = useState(false);
   const [keyStatus, setKeyStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
@@ -44,9 +46,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       const settings = storageService.getSettings();
-      setGeminiApiKey(settings.geminiApiKey);
-      setMasterPrompt(settings.masterPromptTemplate || INFORME_MAESTRO_PROMPT_TEMPLATE);
+      setGeminiApiKey(settings.geminiApiKey || '');
       setSelectedModel(settings.selectedModel || 'gemini-1.5-flash');
+      setPrompts(storageService.getReportPrompts());
       
       setName(currentUser.name);
       setNickname(currentUser.nickname);
@@ -67,8 +69,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleSaveSettings = () => {
     storageService.saveSettings({
       geminiApiKey: geminiApiKey.trim(),
-      masterPromptTemplate: masterPrompt,
-      selectedModel
+      selectedModel,
+      prompts
     });
 
     const updatedUser: UserProfile = {
@@ -83,13 +85,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onUserUpdate(updatedUser);
 
     triggerCelebration();
-    showToast('✅ Configuración guardada correctamente');
+    showToast('✅ Configuración y Prompts guardados correctamente');
   };
 
-  const handleResetPrompt = () => {
-    setMasterPrompt(INFORME_MAESTRO_PROMPT_TEMPLATE);
-    storageService.saveMasterPrompt(INFORME_MAESTRO_PROMPT_TEMPLATE);
-    showToast('🔄 Prompt restaurado a la plantilla maestra oficial');
+  const handleResetSinglePrompt = (key: keyof ReportPromptsConfig) => {
+    setPrompts(prev => ({
+      ...prev,
+      [key]: DEFAULT_REPORT_PROMPTS[key]
+    }));
+    showToast(`🔄 Prompt restaurado a la plantilla original`);
+  };
+
+  const handleResetAllPrompts = () => {
+    setPrompts(DEFAULT_REPORT_PROMPTS);
+    storageService.resetReportPromptsToDefault();
+    showToast('🔄 Todos los prompts han sido restaurados por defecto');
   };
 
   const handleTestApiKey = async () => {
@@ -129,6 +139,44 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     showToast('📦 Respaldo descargado con éxito');
   };
 
+  const promptOptions: { key: keyof ReportPromptsConfig; title: string; objective: string; icon: any; color: string }[] = [
+    {
+      key: 'informeMaestro',
+      title: '📑 Informe Maestro (General)',
+      objective: 'Orquesta las 6 secciones completas del producto + Directrices íntegras para Antigravity',
+      icon: FileCode2,
+      color: '#8B5CF6'
+    },
+    {
+      key: 'uiPaleta',
+      title: '🎨 1. Interfaz (UI) y Paleta',
+      objective: 'Definir el diseño visual, patrones de componentes e identidad cromática',
+      icon: Palette,
+      color: '#A855F7'
+    },
+    {
+      key: 'estructuraSitemap',
+      title: '🗺️ 2. Estructura y Sitemap',
+      objective: 'Organizar la arquitectura de la información, flujos y páginas de manera lógica',
+      icon: Map,
+      color: '#38BDF8'
+    },
+    {
+      key: 'usabilidadUX',
+      title: '🛡️ 3. Usabilidad (UX) y Accesibilidad',
+      objective: 'Asegurar experiencia fluida, sin alerts nativos, táctil 48dp y WCAG 2.1 AA',
+      icon: ShieldCheck,
+      color: '#10B981'
+    },
+    {
+      key: 'tonoVoz',
+      title: '📢 4. Tono, Voz y Orientación',
+      objective: 'Definir personalidad de marca, copywriting y valor al usuario final',
+      icon: MessageSquare,
+      color: '#F59E0B'
+    }
+  ];
+
   return (
     <div style={{
       position: 'fixed',
@@ -146,8 +194,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '850px',
-        maxHeight: '90vh',
+        maxWidth: '920px',
+        maxHeight: '92vh',
         background: 'var(--bg-secondary)',
         border: '1px solid var(--border-medium)',
         borderRadius: 'var(--radius-xl)',
@@ -160,7 +208,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         
         {/* Modal Header */}
         <div style={{
-          padding: '20px 24px',
+          padding: '18px 24px',
           borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
@@ -185,7 +233,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 Configuración & Mi Cuenta
               </h2>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                Personaliza la IA de Gemini, edita el Prompt Maestro y gestiona tu perfil
+                Personaliza la IA de Gemini, edita los Prompts Informes y gestiona tu perfil
               </div>
             </div>
           </div>
@@ -196,11 +244,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Modal Body: Navigation Tabs + Content */}
-        <div style={{ display: 'flex', flex: 1, minHeight: '480px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flex: 1, minHeight: '520px', overflow: 'hidden' }}>
           
           {/* Left Navigation Sidebar */}
           <div style={{
-            width: '220px',
+            width: '210px',
             borderRight: '1px solid var(--border-subtle)',
             background: 'var(--bg-tertiary)',
             padding: '16px 12px',
@@ -231,8 +279,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
 
             <button
-              onClick={() => setActiveTab('prompt')}
-              className={`nav-item ${activeTab === 'prompt' ? 'active' : ''}`}
+              onClick={() => setActiveTab('prompts')}
+              className={`nav-item ${activeTab === 'prompts' ? 'active' : ''}`}
               style={{
                 width: '100%',
                 display: 'flex',
@@ -244,12 +292,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 fontWeight: 600,
                 border: 'none',
                 cursor: 'pointer',
-                background: activeTab === 'prompt' ? 'var(--bg-card-hover)' : 'transparent',
-                color: activeTab === 'prompt' ? '#8B5CF6' : 'var(--text-secondary)'
+                background: activeTab === 'prompts' ? 'var(--bg-card-hover)' : 'transparent',
+                color: activeTab === 'prompts' ? '#8B5CF6' : 'var(--text-secondary)'
               }}
             >
-              <FileCode2 size={16} color={activeTab === 'prompt' ? '#8B5CF6' : 'var(--text-muted)'} />
-              <span>Prompt Maestro</span>
+              <Layers size={16} color={activeTab === 'prompts' ? '#8B5CF6' : 'var(--text-muted)'} />
+              <span>Prompt Informes</span>
             </button>
 
             <button
@@ -420,65 +468,118 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 }}>
                   <Shield size={20} color="#10B981" />
                   <div style={{ fontSize: '12px', color: '#E2E8F0', lineHeight: 1.4 }}>
-                    <strong>Modo Resiliente Activo:</strong> Si no tienes conexión o la clave no está configurada, ByToniProyect utilizará la base de conocimiento curada de UX/UI y generará los reportes y fuentes sin interrupciones.
+                    <strong>Modo Resiliente Activo:</strong> Si no tienes conexión o la clave no está configurada, ByToniProyect utilizará la base de conocimiento curada de UX/UI y generará los 4 informes y el informe maestro sin interrupciones.
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 2: PROMPT MAESTRO */}
-            {activeTab === 'prompt' && (
+            {/* TAB 2: PROMPT INFORMES (AGRUPADOS) */}
+            {activeTab === 'prompts' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 6px 0', color: 'var(--text-primary)' }}>
-                      Editor de Prompt Maestro (Informe Maestro)
+                    <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--text-primary)' }}>
+                      Configuración de Prompt Informes
                     </h3>
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
-                      Este prompt es utilizado por la IA para generar el Informe Maestro y estructurar las 6 secciones oficiales.
+                      Edita las instrucciones y directrices de IA para cada tipo de informe generado en el Studio.
                     </p>
                   </div>
                   
                   <button 
-                    onClick={handleResetPrompt}
+                    onClick={handleResetAllPrompts}
                     className="btn btn-secondary"
                     style={{ fontSize: '11px', padding: '6px 10px', gap: '6px' }}
-                    title="Restaurar a la versión original de Toni"
+                    title="Restaurar todos los prompts oficiales"
                   >
                     <RotateCcw size={12} />
-                    <span>Restaurar Oficial</span>
+                    <span>Restaurar Todos</span>
                   </button>
                 </div>
 
-                <div style={{ position: 'relative' }}>
-                  <textarea
-                    value={masterPrompt}
-                    onChange={e => setMasterPrompt(e.target.value)}
-                    rows={15}
-                    style={{
-                      width: '100%',
-                      background: 'var(--bg-tertiary)',
-                      border: '1px solid var(--border-medium)',
-                      borderRadius: 'var(--radius-md)',
-                      padding: '16px',
-                      color: '#E2E8F0',
-                      fontSize: '12px',
-                      lineHeight: '1.6',
-                      fontFamily: 'monospace',
-                      resize: 'vertical',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                  <div style={{
-                    fontSize: '11px',
-                    color: 'var(--text-muted)',
-                    textAlign: 'right',
-                    marginTop: '4px'
-                  }}>
-                    {masterPrompt.length} caracteres · {masterPrompt.split(/\s+/).length} palabras
-                  </div>
+                {/* Sub-selector Chips */}
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                  {promptOptions.map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setSelectedPromptKey(opt.key)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        border: selectedPromptKey === opt.key ? `1px solid ${opt.color}` : '1px solid var(--border-subtle)',
+                        background: selectedPromptKey === opt.key ? 'var(--bg-card-hover)' : 'var(--bg-tertiary)',
+                        color: selectedPromptKey === opt.key ? opt.color : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {opt.title}
+                    </button>
+                  ))}
                 </div>
+
+                {/* Active Prompt Box */}
+                {(() => {
+                  const currentOpt = promptOptions.find(o => o.key === selectedPromptKey)!;
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                          <strong>Objetivo:</strong> {currentOpt.objective}
+                        </div>
+                        <button
+                          onClick={() => handleResetSinglePrompt(selectedPromptKey)}
+                          className="btn-icon"
+                          title="Restaurar este prompt específico"
+                          style={{ padding: '4px', color: 'var(--text-muted)' }}
+                        >
+                          <RotateCcw size={13} />
+                        </button>
+                      </div>
+
+                      <div style={{ position: 'relative' }}>
+                        <textarea
+                          value={prompts[selectedPromptKey]}
+                          onChange={e => setPrompts({ ...prompts, [selectedPromptKey]: e.target.value })}
+                          rows={14}
+                          style={{
+                            width: '100%',
+                            background: 'var(--bg-tertiary)',
+                            border: '1px solid var(--border-medium)',
+                            borderRadius: 'var(--radius-md)',
+                            padding: '14px',
+                            color: '#E2E8F0',
+                            fontSize: '12px',
+                            lineHeight: '1.6',
+                            fontFamily: 'monospace',
+                            resize: 'vertical',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                        <div style={{
+                          fontSize: '11px',
+                          color: 'var(--text-muted)',
+                          textAlign: 'right',
+                          marginTop: '4px'
+                        }}>
+                          {prompts[selectedPromptKey].length} caracteres · {prompts[selectedPromptKey].split(/\s+/).length} palabras
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -585,7 +686,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       Copia de Seguridad Completa (.json)
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      Incluye proyectos, tareas, secciones, directrices y prompts personalizados.
+                      Incluye proyectos, tareas, secciones, directrices y los 5 prompts informes configurados.
                     </div>
                   </div>
 

@@ -41,10 +41,10 @@ export const DualBoardView: React.FC<DualBoardViewProps> = ({ projectId, tasks: 
     setTasks(taskMap);
 
     const cols = [
-      { id: 'col-1', name: 'Backlog', taskIds: propTasks.filter(t => t.status === 'pending').map(t => t.id) },
+      { id: 'col-1', name: 'Backlog', taskIds: propTasks.filter(t => (t.status as any) === 'pending' || t.status === 'ideas_proposals').map(t => t.id) },
       { id: 'col-2', name: 'Especificación', taskIds: propTasks.filter(t => t.status === 'specification').map(t => t.id) },
       { id: 'col-3', name: 'En Desarrollo', taskIds: propTasks.filter(t => t.status === 'in_development').map(t => t.id) },
-      { id: 'col-4', name: 'Revisión QA', taskIds: propTasks.filter(t => t.status === 'ideas_proposals' || t.status === 'bugs_errors').map(t => t.id) },
+      { id: 'col-4', name: 'Revisión QA', taskIds: propTasks.filter(t => t.status === 'bugs_errors').map(t => t.id) },
       { id: 'col-5', name: 'Listo', taskIds: propTasks.filter(t => t.status === 'completed').map(t => t.id) },
     ];
     
@@ -108,6 +108,7 @@ export const DualBoardView: React.FC<DualBoardViewProps> = ({ projectId, tasks: 
       status: 'pending' as any,
       priority: 'Media',
       assignedTo: 'Unassigned',
+      dueDate: '',
       subtasks: [],
       tags: [],
       directivesChecked: { supabaseSchema: false, rlsStrict: false, securityAuth: false, aiStreaming: false, rgpdLegal: false, driveSync: false },

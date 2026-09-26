@@ -195,10 +195,20 @@ export interface UserProfile {
   isAuthenticated: boolean;
 }
 
+export interface ReportPromptsConfig {
+  informeMaestro: string;
+  uiPaleta: string;
+  estructuraSitemap: string;
+  usabilidadUX: string;
+  tonoVoz: string;
+}
+
 export interface UserSettings {
   geminiApiKey: string;
-  masterPromptTemplate: string;
   selectedModel: string;
   theme: 'dark' | 'light';
+  prompts: ReportPromptsConfig;
+  masterPromptTemplate?: string; // backwards compatibility
 }
+
 

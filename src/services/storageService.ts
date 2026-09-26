@@ -1,6 +1,6 @@
-import { Project, Section, Task, DirectiveItem, UserProfile, UserSettings } from '../types/project';
+import { Project, Section, Task, DirectiveItem, UserProfile, UserSettings, ReportPromptsConfig } from '../types/project';
 import { INITIAL_PROJECTS, INITIAL_SECTIONS, INITIAL_TASKS, INITIAL_DIRECTIVES } from '../data/initialData';
-import { INFORME_MAESTRO_PROMPT_TEMPLATE } from './aiService';
+import { DEFAULT_REPORT_PROMPTS, PROMPT_INFORME_MAESTRO } from './aiService';
 
 const STORAGE_KEYS = {
   PROJECTS: 'bytoni_projects_v2',
@@ -27,9 +27,10 @@ export const DEFAULT_USER: UserProfile = {
 
 export const DEFAULT_SETTINGS: UserSettings = {
   geminiApiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
-  masterPromptTemplate: INFORME_MAESTRO_PROMPT_TEMPLATE,
   selectedModel: 'gemini-1.5-flash',
-  theme: 'dark'
+  theme: 'dark',
+  prompts: DEFAULT_REPORT_PROMPTS,
+  masterPromptTemplate: PROMPT_INFORME_MAESTRO
 };
 
 export const storageService = {
@@ -66,7 +67,12 @@ export const storageService = {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
       if (saved) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        return { 
+          ...DEFAULT_SETTINGS, 
+          ...parsed,
+          prompts: { ...DEFAULT_REPORT_PROMPTS, ...(parsed.prompts || {}) }
+        };
       }
     } catch (e) {
       console.error('Error loading settings from storage:', e);
@@ -76,17 +82,37 @@ export const storageService = {
 
   saveSettings(settings: Partial<UserSettings>): UserSettings {
     const current = this.getSettings();
-    const updated = { ...current, ...settings };
+    const updated = { 
+      ...current, 
+      ...settings,
+      prompts: { ...current.prompts, ...(settings.prompts || {}) }
+    };
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
     return updated;
   },
 
+  getReportPrompts(): ReportPromptsConfig {
+    return this.getSettings().prompts || DEFAULT_REPORT_PROMPTS;
+  },
+
+  saveReportPrompts(prompts: Partial<ReportPromptsConfig>): ReportPromptsConfig {
+    const current = this.getReportPrompts();
+    const updated = { ...current, ...prompts };
+    this.saveSettings({ prompts: updated });
+    return updated;
+  },
+
+  resetReportPromptsToDefault(): ReportPromptsConfig {
+    this.saveSettings({ prompts: DEFAULT_REPORT_PROMPTS });
+    return DEFAULT_REPORT_PROMPTS;
+  },
+
   getMasterPrompt(): string {
-    return this.getSettings().masterPromptTemplate || INFORME_MAESTRO_PROMPT_TEMPLATE;
+    return this.getReportPrompts().informeMaestro || PROMPT_INFORME_MAESTRO;
   },
 
   saveMasterPrompt(prompt: string): void {
-    this.saveSettings({ masterPromptTemplate: prompt });
+    this.saveReportPrompts({ informeMaestro: prompt });
   },
 
   getGeminiApiKey(): string {

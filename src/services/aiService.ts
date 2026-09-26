@@ -232,7 +232,7 @@ const getFallbackSources = (topic: string) => {
   ];
 };
 
-export const INFORME_MAESTRO_PROMPT_TEMPLATE = `Actúa como un Arquitecto de Producto y Diseñador UX/UI experto en desarrollo de aplicaciones web y móviles. Tu objetivo es generar un **Informe Maestro** exhaustivo y listo para ser utilizado en el desarrollo del proyecto con **Antigravity**.
+export const PROMPT_INFORME_MAESTRO = `Actúa como un Arquitecto de Producto y Diseñador UX/UI experto en desarrollo de aplicaciones web y móviles. Tu objetivo es generar un **Informe Maestro** exhaustivo y listo para ser utilizado en el desarrollo del proyecto con **Antigravity**.
 
 Para construir este informe, utilizarás exclusivamente los siguientes insumos y reglas de contenido:
 
@@ -268,17 +268,85 @@ Genera el informe siguiendo estrictamente esta estructura y cumpliendo con las c
 
 Por favor, analiza la información que te proporcionaré a continuación y entrégame el informe estructurado tal como se ha indicado.`;
 
+export const PROMPT_UI_PALETA = `Actúa como un Diseñador UI (User Interface) Senior. A partir de las fuentes que te proporcionaré a continuación, analiza los datos y genera un informe de diseño visual que incluya:
+
+1. **Estilo Visual General:** Línea estética principal (minimalista, corporativa, moderna, lúdica, etc.).
+2. **Paleta de Colores:** Propuesta cromática detallada con códigos sugeridos (Primario, Secundario, Neutros, Aciertos/Alertas) y su propósito de uso.
+3. **Tipografía:** Jerarquía tipográfica recomendada (títulos, subtítulos, cuerpo de texto) y estilo de fuentes.
+4. **Componentes Clave de UI:** Botones, tarjetas, formularios, barras de navegación y elementos flotantes específicos que debe incluir la interfaz.
+5. **Consejos de Coherencia Visual:** Buenas prácticas para mantener la escalabilidad del diseño en la app/web.`;
+
+export const PROMPT_ESTRUCTURA_SITEMAP = `Actúa como un Arquitecto de la Información. Analiza las fuentes que te proporcionaré a continuación y genera un informe estructurado con la arquitectura de la aplicación/web que contenga:
+
+1. **Mapa del Sitio (Sitemap):** Un esquema jerárquico claro (Nivel 1, Nivel 2, etc.) que muestre todas las páginas, secciones y subsecciones recomendadas.
+2. **Flujo de Usuario Principal (User Journey):** Cómo debe moverse el usuario desde la pantalla de bienvenida/login hasta el objetivo principal del producto.
+3. **Secciones Esenciales vs. Secundarias:** Clasificación de qué pantallas son prioritarias para el MVP (Producto Mínimo Viable) y cuáles pueden desarrollarse en fases posteriores.
+4. **Consejos de Arquitectura:** Recomendaciones para evitar clics innecesarios y optimizar la jerarquía de contenidos.`;
+
+export const PROMPT_USABILIDAD_UX = `Actúa como un Experto en UX (User Experience) y Usabilidad. Basándote en las fuentes que te proporcionaré a continuación, redacta un informe de experiencia de usuario que incluya:
+
+1. **Patrones de Interacción Óptimos:** Cómo deben comportarse los elementos táctiles (móvil) o de clic (web) para reducir la fricción.
+2. **Pautas de Accesibilidad (a11y):** Recomendaciones de contraste, tamaños mínimos de fuentes, áreas de pulsación (tap targets) y legibilidad.
+3. **Gestión de Errores y Estados Vacíos:** Directrices sobre cómo debe reaccionar la interfaz ante fallos de conexión, formularios incompletos o pantallas sin datos.
+4. **Consejos de Optimización UX:** Buenas prácticas para maximizar la retención y la conversión del usuario.`;
+
+export const PROMPT_TONO_VOZ = `Actúa como un Content Strategist y Copywriter experto en branding digital. A partir de las fuentes que te proporcionaré, redacta un informe que establezca la voz y orientación de la aplicación/web:
+
+1. **Tono de Comunicación:** Definición de la personalidad (¿Es formal, cercana, motivadora, técnica, directa?).
+2. **Estilo de Copywriting:** Pautas sobre cómo deben redactarse los microcopy textos de botones, llamadas a la acción (CTA), mensajes de éxito y errores.
+3. **Propósito y Orientación:** Resumen del enfoque principal de valor hacia el usuario para mantener alineados todos los textos de la plataforma.
+4. **Consejos de Mensajería:** Ejemplos de buenas y malas prácticas en la redacción de la interfaz.`;
+
+export const INFORME_MAESTRO_PROMPT_TEMPLATE = PROMPT_INFORME_MAESTRO;
+
+export const DEFAULT_REPORT_PROMPTS = {
+  informeMaestro: PROMPT_INFORME_MAESTRO,
+  uiPaleta: PROMPT_UI_PALETA,
+  estructuraSitemap: PROMPT_ESTRUCTURA_SITEMAP,
+  usabilidadUX: PROMPT_USABILIDAD_UX,
+  tonoVoz: PROMPT_TONO_VOZ
+};
+
+export const getReportPromptByType = (reportType: string): string => {
+  try {
+    const saved = localStorage.getItem('bytoni_user_settings_v2');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const customPrompts = parsed.prompts || {};
+      if (reportType.includes('Maestro') && customPrompts.informeMaestro) return customPrompts.informeMaestro;
+      if ((reportType.includes('Interfaz') || reportType.includes('Paleta') || reportType.includes('UI')) && customPrompts.uiPaleta) return customPrompts.uiPaleta;
+      if ((reportType.includes('Estructura') || reportType.includes('Sitemap')) && customPrompts.estructuraSitemap) return customPrompts.estructuraSitemap;
+      if ((reportType.includes('Usabilidad') || reportType.includes('Accesibilidad') || reportType.includes('UX')) && customPrompts.usabilidadUX) return customPrompts.usabilidadUX;
+      if ((reportType.includes('Tono') || reportType.includes('Voz')) && customPrompts.tonoVoz) return customPrompts.tonoVoz;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  if (reportType.includes('Maestro')) return PROMPT_INFORME_MAESTRO;
+  if (reportType.includes('Interfaz') || reportType.includes('Paleta') || reportType.includes('UI')) return PROMPT_UI_PALETA;
+  if (reportType.includes('Estructura') || reportType.includes('Sitemap')) return PROMPT_ESTRUCTURA_SITEMAP;
+  if (reportType.includes('Usabilidad') || reportType.includes('Accesibilidad') || reportType.includes('UX')) return PROMPT_USABILIDAD_UX;
+  if (reportType.includes('Tono') || reportType.includes('Voz')) return PROMPT_TONO_VOZ;
+  return PROMPT_INFORME_MAESTRO;
+};
+
 export const generateReportFromSources = async (
   reportType: string, 
   sourcesContext: string, 
   directivesContext: string = ''
-) => {
-  const isMasterReport = reportType === 'Informe Maestro';
+): Promise<string> => {
+  const isMasterReport = reportType.includes('Maestro');
+  const isUiReport = reportType.includes('Interfaz') || reportType.includes('Paleta') || reportType.includes('UI');
+  const isSitemapReport = reportType.includes('Estructura') || reportType.includes('Sitemap');
+  const isUxReport = reportType.includes('Usabilidad') || reportType.includes('Accesibilidad') || reportType.includes('UX');
+  const isToneReport = reportType.includes('Tono') || reportType.includes('Voz');
+
   const { apiKey, genAI } = getGenAIClient();
-  const masterTemplate = getMasterPromptTemplate();
+  const selectedPrompt = getReportPromptByType(reportType);
 
   if (!genAI || !apiKey.startsWith('AIzaSy')) {
-    // Robust Fallback Report Generator following the exact structure
+    // Fallbacks for each report
     if (isMasterReport) {
       return `# 📑 INFORME MAESTRO - ESPECIFICACIÓN DE PRODUCTO (ANTIGRAVITY)
 
@@ -350,7 +418,134 @@ ${directivesContext || `* **Directriz Maestra #1:** Arquitectura de Datos y Supa
 `;
     }
 
-    // Generic fallback for other reports
+    if (isUiReport) {
+      return `# 🎨 INFORME DE INTERFAZ (UI) Y PALETA DE COLORES
+
+> **Generado:** ${new Date().toLocaleDateString('es-ES', { dateStyle: 'full' })}  
+> **Objetivo:** Definir el diseño visual, patrones de componentes e identidad cromática.
+
+---
+
+### 1. Estilo Visual General
+* **Línea Estética:** Dark Glassmorphism sofisticado, minimalista y de alto contraste visual. Bordes con luz translúcida (\`1px solid rgba(255,255,255,0.08)\`) y tarjetas con sombras flotantes en capas.
+
+### 2. Paleta de Colores
+* **Fondo Principal:** \`#090D16\` (Dark Obsidian Deep)
+* **Superficies y Cards:** \`rgba(18, 26, 43, 0.85)\` con desenfoque de 16px.
+* **Primario (Acción & IA):** \`#8B5CF6\` (Violet) y \`#6366F1\` (Indigo).
+* **Secundario (Éxito & Estados):** \`#10B981\` (Emerald Green).
+* **Alertas y Errores:** \`#EF4444\` (Red Rose).
+* **Textos:** Primario \`#F8FAFC\` (100%), Secundario \`#94A3B8\` (70%), Muted \`#64748B\` (40%).
+
+### 3. Tipografía
+* **Familia:** Inter, SF Pro Display / Sans-Serif moderna con renderizado anti-alias.
+* **Escala:**
+  - H1: \`2.4rem\` (\`24px\`), peso 800 (Bold Display)
+  - H2: \`1.8rem\` (\`18px\`), peso 700 (Semi-bold)
+  - Body: \`1.3rem\` (\`13px\`), peso 400-500
+  - Badges/Labels: \`1.1rem\` (\`11px\`), peso 600
+
+### 4. Componentes Clave de UI
+* **Botones:** Botón primario con gradiente y sombra luminosa, botones secundarios ghost con borde translúcido.
+* **Master-Detail Drawer:** Panel lateral deslizante con tabs de contenido.
+* **Badges:** Chips redondeados con color de fondo al 15% y texto vivo.
+
+### 5. Consejos de Coherencia Visual
+* Mantener consistencia en el radio de curvatura (\`radius-md: 8px\`, \`radius-lg: 12px\`, \`radius-xl: 16px\`).
+* Utilizar espaciado en múltiplos de 4px o 8px para una cuadrícula perfecta.
+`;
+    }
+
+    if (isSitemapReport) {
+      return `# 🗺️ INFORME DE ESTRUCTURA Y MAPA DEL SITIO (SITEMAP)
+
+> **Generado:** ${new Date().toLocaleDateString('es-ES', { dateStyle: 'full' })}  
+> **Objetivo:** Organizar la arquitectura de la información de manera lógica y limpia.
+
+---
+
+### 1. Mapa del Sitio (Sitemap Jerárquico)
+* **Nivel 1: Plataforma Central**
+  * 🏠 **Global Home / Dashboard General:** Resumen de métricas y catálogo de apps.
+  * ✅ **Mis Tareas:** Bandeja personal de entregables asignados.
+  * 📜 **Hub de Directrices:** Fichas maestras de arquitectura y cumplimiento.
+  * 🧠 **Cerebro Central & Studio:** Búsqueda, ingesta de fuentes y generador de prompts.
+* **Nivel 2: Espacio de Proyecto Activo**
+  * 📋 *Vista Lista:* Secciones jerárquicas con subtareas y directrices.
+  * 🗂️ *Vista Tablero:* Columnas Kanban por estado de flujo.
+  * ⏱️ *Vista Cronograma:* Línea de tiempo Gantt con fechas e hitos.
+  * 📅 *Vista Calendario:* Vista de entregables mensuales.
+  * 📊 *Vista Panel:* Métricas de avance y salud del proyecto.
+
+### 2. Flujo de Usuario Principal (User Journey)
+1. **Acceso:** Login rápido con 1 clic (Perfil Toni).
+2. **Selección:** Elección del proyecto activo desde la barra lateral o selector rápido.
+3. **Ejecución:** Creación de tarea -> Verificación de directrices -> Generación de prompt para Antigravity -> Avance en Kanban.
+
+### 3. Secciones Esenciales (MVP) vs. Secundarias
+* **MVP:** Lista de tareas, Tablero Kanban, Hub de Directrices, Cerebro Central y Generador de Informes.
+* **Fase 2:** Integración SSE en tiempo real con backend Supabase y notificaciones Push.
+
+### 4. Consejos de Arquitectura
+* Profundidad máxima de navegación: 2 niveles para evitar fatiga de clics.
+* Atajos de teclado para cambio de vista rápido.
+`;
+    }
+
+    if (isUxReport) {
+      return `# 🛡️ INFORME DE USABILIDAD (UX) Y ACCESIBILIDAD
+
+> **Generado:** ${new Date().toLocaleDateString('es-ES', { dateStyle: 'full' })}  
+> **Objetivo:** Asegurar una experiencia de uso fluida, intuitiva y accesible.
+
+---
+
+### 1. Patrones de Interacción Óptimos
+* Arrastre de tarjetas en Kanban con respuesta inmediata (\`@hello-pangea/dnd\`).
+* Atajos de teclado en formularios (Enter para guardar, Esc para cerrar modales).
+* Feedback visual inmediato mediante confeti y micro-animaciones al completar hitos.
+
+### 2. Pautas de Accesibilidad (WCAG 2.1 AA)
+* **Contraste de Color:** Mínimo ratio 4.5:1 para texto estándar y 3:1 para títulos grandes.
+* **Áreas Táctiles:** Mínimo de \`48x48dp\` en todos los botones e iconos interactivos en pantallas móviles.
+* **Navegación por Teclado:** Foco visual visible (\`focus-visible: 2px solid #8B5CF6\`).
+
+### 3. Gestión de Errores y Estados Vacíos
+* Cero llamadas a \`alert()\`, \`confirm()\` o \`prompt()\`. Todos los mensajes deben ser notificaciones flotantes (*toasts*) con \`role="alert"\` y \`aria-live="polite"\`.
+* Estados vacíos informativos con ilustraciones SVG sutiles y botón de llamada a la acción ("Añadir primera tarea").
+
+### 4. Consejos de Optimización UX
+* Auto-guardado local en \`localStorage\` ante cualquier edición para prevenir pérdida de datos.
+* Carga asíncrona no bloqueante con indicadores de progreso claros.
+`;
+    }
+
+    if (isToneReport) {
+      return `# 📢 INFORME DE TONO, VOZ Y ORIENTACIÓN DEL PRODUCTO
+
+> **Generado:** ${new Date().toLocaleDateString('es-ES', { dateStyle: 'full' })}  
+> **Objetivo:** Definir la personalidad de la marca y cómo se comunica con el usuario.
+
+---
+
+### 1. Tono de Comunicación
+* **Personalidad:** Directo, asertivo, técnico, altamente productivo y orientado a la acción (*Estilo Linear / Raycast*).
+* **Voz:** Autorizada pero cercana. Transmite control, rigor metodológico y rapidez.
+
+### 2. Estilo de Copywriting
+* **Botones / CTAs:** Verbos en infinitivo o imperativo claro ("Generar Informe", "Añadir tarea", "Guardar cambios").
+* **Mensajes de Éxito:** Breves y alentadores con emoji sutil ("✨ Informe generado con éxito", "✅ Tarea completada").
+* **Mensajes de Error:** Explicativos y orientados a la solución ("⚠️ Formato de clave API no válido. Debe comenzar por AIzaSy...").
+
+### 3. Propósito y Orientación de Valor
+* **Propósito Central:** Permitir a Toni orquestar aplicaciones, validar directrices maestras y alimentar a subagentes de IA de Antigravity con cero fricción.
+
+### 4. Consejos de Mensajería
+* **Correcto:** "Directriz de Supabase verificada (RLS activo)."
+* **Incorrecto:** "Parece que quizás deberías revisar la base de datos si te parece bien."
+`;
+    }
+
     return `# 📄 ${reportType.toUpperCase()} - ByToniProyect
 
 > **Generado:** ${new Date().toLocaleDateString('es-ES', { dateStyle: 'full' })}  
@@ -358,55 +553,29 @@ ${directivesContext || `* **Directriz Maestra #1:** Arquitectura de Datos y Supa
 
 ---
 
-## 🎯 1. Resumen Ejecutivo
+## 🎯 Resumen Ejecutivo
 ${sourcesContext ? `### 📚 Fuentes Analizadas:\n${sourcesContext}\n` : 'Sin fuentes adicionales.'}
 
----
-
-## 🛠️ 2. Arquitectura y Stack Sugerido
-- **Capa de Dominio:** Entidades puras, lógica de negocio sin dependencias externas (*Clean Architecture*).
-- **Capa de Datos:** Supabase PostgreSQL con RLS (auth.uid() = user_id) y persistencia sincronizada.
-- **Capa de Presentación:** React + TypeScript con unidades rem base 10px, Dark Glassmorphism y cero alertas nativas.
-
----
-
-## 📋 3. Directrices y Normativa
-${directivesContext || 'Directrices estándar del proyecto aplicadas.'}
+## 📋 Directrices Aplicadas
+${directivesContext || 'Directrices oficiales aplicadas.'}
 `;
   }
 
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-  let prompt = '';
-  if (isMasterReport) {
-    prompt = `
-${masterTemplate}
+  const prompt = `
+${selectedPrompt}
 
-A continuación tienes la información del proyecto a procesar:
+A continuación tienes la información y fuentes recopiladas del proyecto:
 
 ## INFORMES DE FUENTES:
 ${sourcesContext || 'Fuentes analizadas del proyecto y patrones de diseño UX/UI modernos.'}
 
 ## DIRECTRICES:
 ${directivesContext || '1. Directriz Maestra Supabase PostgreSQL (esquemas mia_*/com_*, RLS estricto auth.uid() = user_id).\n2. Directriz de Seguridad y Autenticación con Route Guards.\n3. Directriz de Streaming IA y SSE.\n4. Directriz RGPD y Branding Antonio Javier García García (DNI 34799350M).\n5. Directriz de Registro y Control Google Drive.'}
-`;
-  } else {
-    prompt = `
-Eres un analista experto en desarrollo de software, arquitectura de sistemas y diseño de productos digitales. 
-Tu tarea es generar un documento de tipo: "${reportType}".
 
-Aquí tienes la información y contexto recopilado de varias fuentes del usuario:
----
-${sourcesContext || 'No hay fuentes seleccionadas.'}
----
-Directrices activas:
-${directivesContext || 'Sin directrices específicas.'}
-
-Instrucciones:
-1. Genera el "${reportType}" solicitado en formato Markdown.
-2. Hazlo estructurado, profesional y muy completo.
+Genera el informe solicitado en formato Markdown profesional y completo.
 `;
-  }
 
   try {
     const result = await model.generateContent(prompt);

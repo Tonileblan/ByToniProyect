@@ -47,8 +47,8 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ isOpen, onCl
       id: `proj_${Date.now()}`,
       name: projectName || 'Nuevo Proyecto',
       slug: (projectName || 'Nuevo Proyecto').toLowerCase().replace(/\s+/g, '-'),
-      category: projectType || 'Web App',
-      status: 'Idea',
+      category: (projectType as any) || 'Web App',
+      status: 'Idea' as any,
       database: directives.supabase ? 'Supabase' : 'Custom',
       auth: directives.supabase ? 'Supabase Auth' : 'Custom',
       aiIntegration: 'Asistente MCP',
@@ -60,7 +60,10 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ isOpen, onCl
       problem: 'Extraído automáticamente por la IA',
       targetAudience: 'Definido por la IA',
       coreFeatures: ['Feature 1', 'Feature 2'],
-      kanbanColumns: ['Backlog', 'En Progreso', 'Revisión', 'Completado']
+      appType: 'Web & Frontend',
+      color: '#6366f1',
+      icon: 'Folder',
+      createdAt: new Date().toISOString()
     };
     onSaveProject(proj);
     setStep(1);

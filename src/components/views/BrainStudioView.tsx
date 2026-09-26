@@ -5,7 +5,7 @@ import {
   Download, Sparkles, BrainCircuit, Globe, Target,
   Database, Search, Lightbulb, Save, CheckCircle2, Cloud, Zap,
   X, Mic, Presentation, FileCode2, BookOpen, ExternalLink, Eye,
-  AlertTriangle
+  AlertTriangle, Palette, Map, ShieldCheck, Compass
 } from 'lucide-react';
 import { Project } from '../../types/project';
 import { triggerCelebration } from '../../common/ConfettiCelebration';
@@ -15,6 +15,7 @@ import { storageService } from '../../services/storageService';
 interface BrainStudioViewProps {
   projects: Project[];
   activeProject: Project;
+  onUpdateProject?: (updatedProject: Project) => void;
 }
 
 interface SourceItem {
@@ -710,24 +711,81 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+          {/* 4 Predefined Specialized Reports Requested by Toni */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
             
-            {/* Other Core Generators */}
-            <button onClick={() => handleGenerateReport('Especificación Técnica')} className="btn btn-secondary" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}>
-              <BookOpen size={22} color="#10B981" />
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Spec. Técnica</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Requisitos y arquitectura del sistema</div>
+            {/* 1. Interfaz UI y Paleta */}
+            <button 
+              onClick={() => handleGenerateReport('Informe de Interfaz (UI) y Paleta de Colores')} 
+              disabled={!!isGeneratingStudio}
+              className="btn btn-secondary" 
+              style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}
+            >
+              <Palette size={20} color="#A855F7" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  1. Interfaz (UI) y Paleta
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Diseño visual e identidad cromática
+                </div>
+              </div>
+            </button>
+
+            {/* 2. Estructura y Sitemap */}
+            <button 
+              onClick={() => handleGenerateReport('Informe de Estructura y Mapa del Sitio (Sitemap)')} 
+              disabled={!!isGeneratingStudio}
+              className="btn btn-secondary" 
+              style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}
+            >
+              <Map size={20} color="#38BDF8" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  2. Estructura y Sitemap
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Arquitectura y flujos de usuario
+                </div>
               </div>
             </button>
             
-            <button onClick={() => handleGenerateReport('Mapa Mental de Arquitectura')} className="btn btn-secondary" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}>
-              <Globe size={22} color="#38BDF8" />
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Mapa Mental</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Esquema visual del proyecto</div>
+            {/* 3. Usabilidad UX y Accesibilidad */}
+            <button 
+              onClick={() => handleGenerateReport('Informe de Usabilidad (UX) y Accesibilidad')} 
+              disabled={!!isGeneratingStudio}
+              className="btn btn-secondary" 
+              style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}
+            >
+              <ShieldCheck size={20} color="#10B981" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  3. Usabilidad (UX) y Accesibilidad
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Interacción, WCAG 2.1 y ergonomía
+                </div>
               </div>
             </button>
+
+            {/* 4. Tono, Voz y Orientación */}
+            <button 
+              onClick={() => handleGenerateReport('Informe de Tono, Voz y Orientación del Producto')} 
+              disabled={!!isGeneratingStudio}
+              className="btn btn-secondary" 
+              style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}
+            >
+              <MessageSquare size={20} color="#F59E0B" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  4. Tono, Voz y Orientación
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Copywriting y personalidad de marca
+                </div>
+              </div>
+            </button>
+
           </div>
 
           <div style={{ marginTop: '32px' }}>
