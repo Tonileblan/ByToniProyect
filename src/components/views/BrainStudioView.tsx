@@ -618,101 +618,132 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
               </div>
             </div>
 
-            {/* Split Content Body: Upper = Document Content, Lower = Interactive AI Chat */}
+            {/* Split Content Body: Upper = Document Content (Expanded), Lower = Interactive AI Chat Docked at Bottom */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               
-              {/* UPPER SECTION: DOCUMENT VIEWER */}
+              {/* UPPER SECTION: DOCUMENT VIEWER (Takes all main vertical space) */}
               <div style={{ 
                 flex: 1, 
-                minHeight: '220px',
                 overflowY: 'auto', 
                 padding: '24px 32px', 
                 fontSize: '14px', 
                 lineHeight: 1.7, 
                 color: 'var(--text-primary)', 
-                background: 'rgba(0, 0, 0, 0.15)',
-                borderBottom: '1px solid var(--border-medium)'
+                background: 'rgba(0, 0, 0, 0.15)'
               }}>
                 <div style={{ maxWidth: '850px', margin: '0 auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
                   {viewingDocument.content}
                 </div>
               </div>
 
-              {/* LOWER SECTION: INTERACTIVE AI CHAT SPECIFICALLY ABOUT THIS REPORT */}
+              {/* BOTTOM DOCKED SECTION: CHAT & DISCREET SUGGESTIONS */}
               <div style={{ 
-                height: '340px', 
-                minHeight: '280px',
                 display: 'flex', 
                 flexDirection: 'column', 
                 background: 'var(--bg-glass-heavy)',
-                overflow: 'hidden'
+                borderTop: '1px solid var(--border-medium)',
+                maxHeight: docChatMessages.length > 0 ? '280px' : 'auto'
               }}>
-                {/* Chat Section Header */}
-                <div style={{ 
-                  padding: '10px 20px', 
-                  borderBottom: '1px solid var(--border-subtle)', 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  background: 'rgba(255,255,255,0.01)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <BrainCircuit size={16} color="var(--accent-primary)" />
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      Chat e Iteración sobre este Informe
-                    </span>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg-card)', padding: '2px 8px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-subtle)' }}>
-                      Gemini 1.5
-                    </span>
-                  </div>
-                  {docChatMessages.length > 0 && (
-                    <button 
-                      onClick={() => setDocChatMessages([])}
-                      className="btn-icon" 
-                      title="Reiniciar chat de este informe"
-                      style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}
-                    >
-                      <RefreshCw size={12} /> Limpiar conversación
-                    </button>
-                  )}
-                </div>
 
-                {/* 3 SUGGESTED CHANGES PILLS (ENCIMA DEL CHAT) */}
+                {/* Messages feed if there are active messages in the conversation */}
+                {docChatMessages.length > 0 && (
+                  <div style={{ 
+                    maxHeight: '160px', 
+                    overflowY: 'auto', 
+                    padding: '10px 18px', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '8px',
+                    borderBottom: '1px solid var(--border-subtle)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        Debate sobre el informe
+                      </span>
+                      <button 
+                        onClick={() => setDocChatMessages([])}
+                        className="btn-icon" 
+                        title="Limpiar conversación"
+                        style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 6px' }}
+                      >
+                        <RefreshCw size={10} /> Limpiar
+                      </button>
+                    </div>
+
+                    {docChatMessages.map(msg => (
+                      <div 
+                        key={msg.id} 
+                        style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                          gap: '2px'
+                        }}
+                      >
+                        <div style={{ 
+                          maxWidth: '85%', 
+                          padding: '8px 12px', 
+                          borderRadius: 'var(--radius-md)', 
+                          background: msg.role === 'user' ? 'var(--accent-primary)' : 'var(--bg-card)', 
+                          color: msg.role === 'user' ? '#ffffff' : 'var(--text-primary)', 
+                          border: msg.role === 'user' ? 'none' : '1px solid var(--border-subtle)',
+                          fontSize: '12px', 
+                          lineHeight: 1.5, 
+                          whiteSpace: 'pre-wrap'
+                        }}>
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+
+                    {isProcessingDocChat && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#A78BFA', padding: '4px 6px' }}>
+                        <RefreshCw size={12} style={{ animation: 'spin 1.5s linear infinite' }} />
+                        <span style={{ fontSize: '11px', fontWeight: 500 }}>Analizando con Gemini...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 3 DISCREET SUGGESTION PILLS (PEGADO ABAJO, MITAD DE TAMAÑO Y DISCRETOS) */}
                 <div style={{ 
-                  padding: '8px 20px', 
-                  background: 'rgba(255, 255, 255, 0.02)', 
-                  borderBottom: '1px solid var(--border-subtle)',
+                  padding: '6px 16px 2px 16px', 
                   display: 'flex', 
                   flexWrap: 'wrap', 
-                  gap: '8px',
+                  gap: '6px',
                   alignItems: 'center'
                 }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Sparkles size={13} color="#F59E0B" /> Sugerencias de cambio:
+                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <Sparkles size={11} color="#F59E0B" /> Sugerencias:
                   </span>
                   {getReportSuggestions(viewingDocument.type).map((sug, sIdx) => (
                     <button
                       key={sIdx}
                       onClick={() => handleSendDocChatMessage(sug)}
                       disabled={isProcessingDocChat}
-                      className="btn btn-secondary"
                       style={{
-                        padding: '4px 10px',
-                        fontSize: '11px',
-                        borderRadius: 'var(--radius-full)',
-                        background: 'var(--bg-card)',
-                        border: '1px solid var(--border-medium)',
-                        color: 'var(--text-primary)',
-                        transition: 'all 0.2s ease',
-                        whiteSpace: 'nowrap'
+                        padding: '2px 8px',
+                        fontSize: '10px',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        whiteSpace: 'nowrap',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        lineHeight: 1.3
                       }}
                       onMouseEnter={e => {
-                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                        e.currentTarget.style.background = 'rgba(139, 92, 246, 0.12)';
+                        e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+                        e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                        e.currentTarget.style.color = 'var(--text-primary)';
                       }}
                       onMouseLeave={e => {
-                        e.currentTarget.style.borderColor = 'var(--border-medium)';
-                        e.currentTarget.style.background = 'var(--bg-card)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
                       }}
                     >
                       {sug}
@@ -720,50 +751,13 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
                   ))}
                 </div>
 
-                {/* Document Chat Messages Stream */}
-                <div style={{ flex: 1, padding: '16px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {docChatMessages.map(msg => (
-                    <div 
-                      key={msg.id} 
-                      style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                        gap: '4px'
-                      }}
-                    >
-                      <div style={{ 
-                        maxWidth: '85%', 
-                        padding: '12px 16px', 
-                        borderRadius: 'var(--radius-lg)', 
-                        background: msg.role === 'user' ? 'var(--accent-primary)' : 'var(--bg-card)', 
-                        color: msg.role === 'user' ? '#ffffff' : 'var(--text-primary)', 
-                        border: msg.role === 'user' ? 'none' : '1px solid var(--border-subtle)',
-                        fontSize: '13px', 
-                        lineHeight: 1.6, 
-                        whiteSpace: 'pre-wrap',
-                        boxShadow: 'var(--shadow-sm)'
-                      }}>
-                        {msg.content}
-                      </div>
-                    </div>
-                  ))}
-
-                  {isProcessingDocChat && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#A78BFA', padding: '8px 12px' }}>
-                      <RefreshCw size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
-                      <span style={{ fontSize: '12px', fontWeight: 500 }}>Analizando e iterando informe con Gemini...</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Document Chat Input Bar */}
-                <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border-subtle)', background: 'rgba(255, 255, 255, 0.01)' }}>
+                {/* Compact Chat Input Bar */}
+                <div style={{ padding: '6px 16px 10px 16px' }}>
                   <div style={{ 
                     display: 'flex', 
-                    gap: '8px', 
+                    gap: '6px', 
                     background: 'var(--bg-card)', 
-                    padding: '6px 12px', 
+                    padding: '4px 10px', 
                     borderRadius: 'var(--radius-full)', 
                     border: '1px solid var(--border-medium)',
                     alignItems: 'center'
@@ -772,9 +766,9 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
                       type="text"
                       value={docChatInput}
                       onChange={e => setDocChatInput(e.target.value)}
-                      placeholder="Escribe qué cambio, ajuste o ampliación necesitas sobre este informe..."
+                      placeholder="Escribe qué cambio, ajuste o ampliación necesitas..."
                       className="form-input"
-                      style={{ flex: 1, background: 'transparent', border: 'none', padding: '4px 8px', outline: 'none', fontSize: '13px', color: 'var(--text-primary)' }}
+                      style={{ flex: 1, background: 'transparent', border: 'none', padding: '4px 6px', outline: 'none', fontSize: '12px', color: 'var(--text-primary)' }}
                       onKeyDown={e => { if (e.key === 'Enter') handleSendDocChatMessage(); }}
                     />
                     <button 
@@ -783,16 +777,16 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
                       className="btn btn-primary" 
                       style={{ 
                         borderRadius: 'var(--radius-full)', 
-                        padding: '8px 14px', 
-                        height: '32px', 
+                        padding: '4px 12px', 
+                        height: '28px', 
                         display: 'flex', 
                         alignItems: 'center', 
                         justifyContent: 'center',
-                        fontSize: '12px',
-                        gap: '6px'
+                        fontSize: '11px',
+                        gap: '4px'
                       }}
                     >
-                      <Send size={13} />
+                      <Send size={11} />
                       <span>Enviar</span>
                     </button>
                   </div>
