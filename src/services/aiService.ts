@@ -708,9 +708,7 @@ Has solicitado: **"${userMessage}"**
 > ⚡ Ajuste Aplicado (${userMessage}):
 - Se refuerza la definición técnica y la granularidad de los criterios de aceptación.
 - Coherencia visual con Dark Glassmorphism y tipografía Inter / Outfit.
-\`\`\`
-
-*(Nota: Para streaming avanzado y generación continua en vivo con Gemini 1.5 Pro/Flash, introduce tu Google Gemini API Key en Configuración).*`;
+\`\`\``;
   }
 
   try {

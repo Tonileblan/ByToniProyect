@@ -94,16 +94,10 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
     }
   }, [activeProject?.id]);
 
-  // Al abrir un documento, inicializar el chat especializado con un mensaje de bienvenida
+  // Al abrir un documento, inicializar el chat limpio
   useEffect(() => {
     if (viewingDocument) {
-      setDocChatMessages([
-        {
-          id: 'welcome_doc_msg',
-          role: 'assistant',
-          content: `👋 **Asistente IA activo sobre "${viewingDocument.type}"**\n\nPuedes hacerme cualquier consulta, pedirme que modifique o amplíe secciones, o pulsar cualquiera de las 3 sugerencias rápidas de arriba para iterar sobre el informe.`
-        }
-      ]);
+      setDocChatMessages([]);
       setDocChatInput('');
       setCopiedDoc(false);
     }
@@ -671,14 +665,14 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
                       Gemini 1.5
                     </span>
                   </div>
-                  {docChatMessages.length > 1 && (
+                  {docChatMessages.length > 0 && (
                     <button 
-                      onClick={() => setDocChatMessages([docChatMessages[0]])}
+                      onClick={() => setDocChatMessages([])}
                       className="btn-icon" 
                       title="Reiniciar chat de este informe"
                       style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
-                      <RefreshCw size={12} /> Reiniciar conversación
+                      <RefreshCw size={12} /> Limpiar conversación
                     </button>
                   )}
                 </div>
