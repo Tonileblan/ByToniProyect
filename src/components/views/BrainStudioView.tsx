@@ -64,6 +64,12 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isProcessingChat, setIsProcessingChat] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'info' | 'error' | 'success' } | null>(null);
+
+  const showToast = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   // ---- Funciones Gestor de Fuentes ----
   const handleSimulateWebSearch = async () => {
@@ -76,7 +82,7 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
       setWebSearchResults(results);
     } catch (error) {
       console.error(error);
-      alert('Hubo un error en la búsqueda web.');
+      showToast('Hubo un error en la búsqueda web.', 'error');
     } finally {
       setIsSearchingWeb(false);
     }
@@ -142,7 +148,7 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
       setStudySourcesFound(results);
     } catch (error) {
       console.error(error);
-      alert('Hubo un error al buscar las fuentes. Por favor, inténtalo de nuevo.');
+      showToast('Hubo un error al buscar las fuentes. Mostrando catálogo recomendado.', 'error');
     } finally {
       setIsSearchingStudy(false);
     }
@@ -251,7 +257,7 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
       
       triggerCelebration();
     } catch (error: any) {
-      alert(`No se pudo generar el reporte: ${error.message}`);
+      showToast(`No se pudo generar el reporte: ${error.message}`, 'error');
     } finally {
       setIsGeneratingStudio(null);
     }
@@ -700,6 +706,35 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
 
         </div>
       </div>
+
+      {/* Floating Toast Notification in DOM */}
+      {toast && (
+        <div 
+          role="alert"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            background: toast.type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(16, 185, 129, 0.9)',
+            color: '#ffffff',
+            padding: '12px 20px',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(12px)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontSize: '14px',
+            fontWeight: 500,
+            zIndex: 9999,
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+        >
+          <span>{toast.type === 'error' ? '⚠️' : '✨'}</span>
+          <span>{toast.message}</span>
+        </div>
+      )}
 
       <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
     </div>
