@@ -211,6 +211,25 @@ export const storageService = {
     return JSON.stringify(backup, null, 2);
   },
 
+  // --- Generated Reports per Project ---
+  getProjectReports(projectId: string): { id: string; type: string; date: string; content: string }[] {
+    try {
+      const saved = localStorage.getItem(`bytoni_reports_${projectId}`);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Error loading reports:', e);
+    }
+    return [];
+  },
+
+  saveProjectReports(projectId: string, reports: { id: string; type: string; date: string; content: string }[]): void {
+    try {
+      localStorage.setItem(`bytoni_reports_${projectId}`, JSON.stringify(reports));
+    } catch (e) {
+      console.error('Error saving reports:', e);
+    }
+  },
+
   resetToDefaults(): void {
     localStorage.removeItem(STORAGE_KEYS.PROJECTS);
     localStorage.removeItem(STORAGE_KEYS.SECTIONS);

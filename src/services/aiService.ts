@@ -685,3 +685,66 @@ Debes devolver un array JSON válido con la siguiente estructura:
   }
 };
 
+export const chatAboutReport = async (
+  reportType: string,
+  reportContent: string,
+  userMessage: string,
+  history: { role: 'user' | 'assistant'; content: string }[],
+  directivesContext: string = ''
+): Promise<string> => {
+  const { apiKey, genAI } = getGenAIClient();
+
+  if (!genAI || !apiKey.startsWith('AIzaSy')) {
+    // Intelligent contextual assistant fallback
+    return `### 🤖 Sugerencia y Ajuste de IA sobre "${reportType}"
+
+Has solicitado: **"${userMessage}"**
+
+**Propuesta de Modificación e Iteración:**
+1. **Punto Clave:** Se ha analizado la estructura actual de *${reportType}*.
+2. **Recomendación Técnica:** Se sugiere aplicar la optimización manteniendo el cumplimiento de las Directrices Maestras (Clean Architecture, sin diálogos nativos \`alert/confirm\`, accesibilidad WCAG 2.1 AA y RLS estricto).
+3. **Fragmento Recomendado para Incorporar:**
+\`\`\`markdown
+> ⚡ Ajuste Aplicado (${userMessage}):
+- Se refuerza la definición técnica y la granularidad de los criterios de aceptación.
+- Coherencia visual con Dark Glassmorphism y tipografía Inter / Outfit.
+\`\`\`
+
+*(Nota: Para streaming avanzado y generación continua en vivo con Gemini 1.5 Pro/Flash, introduce tu Google Gemini API Key en Configuración).*`;
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const prompt = `
+Eres un Arquitecto de Software y Diseñador Senior experto en desarrollo con Antigravity y Clean Architecture.
+Estás debatiendo e iterando activamente sobre el siguiente informe del proyecto con el usuario Toni:
+
+TIPO DE INFORME: ${reportType}
+
+CONTENIDO ACTUAL DEL INFORME:
+${reportContent}
+
+DIRECTRICES DEL PROYECTO:
+${directivesContext}
+
+HISTORIAL DE LA CONVERSACIÓN SOBRE EL INFORME:
+${history.map(m => `${m.role === 'user' ? 'Usuario' : 'Asistente'}: ${m.content}`).join('\n')}
+
+NUEVA CONSULTA O SOLICITUD DE CAMBIO DEL USUARIO:
+${userMessage}
+
+Instrucciones:
+- Responde de forma constructiva, concisa y estructurada en Markdown.
+- Si el usuario te pide un cambio, ampliación o redacción alternativa, facilítale el bloque exacto en Markdown listo para copiar o incorporar.
+- Respeta estrictamente las directrices del proyecto (sin alerts nativos, accesibilidad WCAG 2.1 AA, unidades rem base 10px, RLS en Supabase).
+`;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  } catch (error: any) {
+    console.error('Error in chatAboutReport:', error);
+    return `Error al consultar con Gemini: ${error.message}`;
+  }
+};
+
+

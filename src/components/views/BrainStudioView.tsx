@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  FileText, Link as LinkIcon, Video, FileUp, 
-  Trash2, Plus, RefreshCw, BarChart2, MessageSquare, 
+  FileText, Video, FileUp, 
+  Trash2, Plus, RefreshCw, MessageSquare, 
   Download, Sparkles, BrainCircuit, Globe, Target,
-  Database, Search, Lightbulb, Save, CheckCircle2, Cloud, Zap,
-  X, Mic, Presentation, FileCode2, BookOpen, ExternalLink, Eye,
-  AlertTriangle, Palette, Map, ShieldCheck, Compass
+  Search, Lightbulb, Cloud, 
+  X, FileCode2, ExternalLink, Eye,
+  Palette, Map, ShieldCheck, Copy, Check, Send
 } from 'lucide-react';
 import { Project } from '../../types/project';
 import { triggerCelebration } from '../../common/ConfettiCelebration';
-import { generateReportFromSources, chatWithBrain, searchSourcesWithAI } from '../../services/aiService';
+import { generateReportFromSources, chatWithBrain, searchSourcesWithAI, chatAboutReport } from '../../services/aiService';
 import { storageService } from '../../services/storageService';
 
 interface BrainStudioViewProps {
@@ -39,6 +39,13 @@ interface ChatMessage {
   content: string;
 }
 
+interface GeneratedReport {
+  id: string;
+  type: string;
+  date: string;
+  content: string;
+}
+
 export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, activeProject }) => {
   const [isAddingSources, setIsAddingSources] = useState(false);
   const [sources, setSources] = useState<SourceItem[]>([]);
@@ -58,11 +65,17 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
   const [isSearchingStudy, setIsSearchingStudy] = useState(false);
   
   // --- Studio Results State ---
-  const [studioResults, setStudioResults] = useState<{id: string, type: string, date: string, content: string}[]>([]);
+  const [studioResults, setStudioResults] = useState<GeneratedReport[]>([]);
   const [isGeneratingStudio, setIsGeneratingStudio] = useState<string | null>(null);
-  const [viewingDocument, setViewingDocument] = useState<{id: string, type: string, content: string} | null>(null);
+  const [viewingDocument, setViewingDocument] = useState<GeneratedReport | null>(null);
 
-  // --- Chat State ---
+  // --- Document Chat State (Interactive discussion per report) ---
+  const [docChatMessages, setDocChatMessages] = useState<ChatMessage[]>([]);
+  const [docChatInput, setDocChatInput] = useState('');
+  const [isProcessingDocChat, setIsProcessingDocChat] = useState(false);
+  const [copiedDoc, setCopiedDoc] = useState(false);
+
+  // --- General Brain Chat State ---
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isProcessingChat, setIsProcessingChat] = useState(false);
@@ -71,6 +84,73 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
   const showToast = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  // Cargar reportes guardados del proyecto al cambiar de proyecto activo
+  useEffect(() => {
+    if (activeProject?.id) {
+      const savedReports = storageService.getProjectReports(activeProject.id);
+      setStudioResults(savedReports);
+    }
+  }, [activeProject?.id]);
+
+  // Al abrir un documento, inicializar el chat especializado con un mensaje de bienvenida
+  useEffect(() => {
+    if (viewingDocument) {
+      setDocChatMessages([
+        {
+          id: 'welcome_doc_msg',
+          role: 'assistant',
+          content: `👋 **Asistente IA activo sobre "${viewingDocument.type}"**\n\nPuedes hacerme cualquier consulta, pedirme que modifique o amplíe secciones, o pulsar cualquiera de las 3 sugerencias rápidas de arriba para iterar sobre el informe.`
+        }
+      ]);
+      setDocChatInput('');
+      setCopiedDoc(false);
+    }
+  }, [viewingDocument?.id]);
+
+  // ---- Sugerencias Dinámicas de 3 Cambios según el tipo de informe ----
+  const getReportSuggestions = (reportType: string): string[] => {
+    if (reportType.includes('Maestro')) {
+      return [
+        '⚡ Profundizar en arquitectura de datos y esquema Supabase',
+        '🎯 Añadir más criterios de aceptación funcionales',
+        '🛡️ Auditar alineación con directrices y seguridad RLS'
+      ];
+    }
+    if (reportType.includes('Interfaz') || reportType.includes('Paleta') || reportType.includes('UI')) {
+      return [
+        '🎨 Proponer paleta alternativa de alto contraste con códigos HEX',
+        '🧩 Especificar microinteracciones y estados hover/focus',
+        '📱 Adaptar componentes UI a pantallas móviles compactas'
+      ];
+    }
+    if (reportType.includes('Estructura') || reportType.includes('Sitemap')) {
+      return [
+        '🗺️ Simplificar jerarquía del sitemap para el MVP inicial',
+        '🚀 Optimizar User Journey principal a 3 pasos directos',
+        '🔄 Añadir navegación para estados vacíos y feedback visual'
+      ];
+    }
+    if (reportType.includes('Usabilidad') || reportType.includes('Accesibilidad') || reportType.includes('UX')) {
+      return [
+        '♿ Verificar conformidad con WCAG 2.1 AA y áreas táctiles (48x48dp)',
+        '⚠️ Sustituir alertas nativas con toasts en el DOM',
+        '⚡ Reducir clics innecesarios y optimizar flujos críticos'
+      ];
+    }
+    if (reportType.includes('Tono') || reportType.includes('Voz')) {
+      return [
+        '✍️ Hacer el tono más directo, conciso y profesional',
+        '🏷️ Crear ejemplos de microcopy para botones y mensajes de error',
+        '💡 Diseñar llamadas a la acción (CTA) de alta conversión'
+      ];
+    }
+    return [
+      '🔍 Ampliar detalles técnicos y arquitectura',
+      '⚡ Simplificar y resumir puntos clave',
+      '🛡️ Verificar coherencia con directrices del proyecto'
+    ];
   };
 
   // ---- Funciones Gestor de Fuentes ----
@@ -139,13 +219,14 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
     setActiveStudyType(type);
     setIsSearchingStudy(true);
     setStudySourcesFound([]);
-    setSelectedStudySources(new Set());
 
     try {
-      const query = type === 'benchmark' ? 'mejores practicas y patrones modernos de diseño UI/UX web y apps' :
-                    type === 'quejas' ? 'peores practicas de diseño UI/UX, quejas comunes en apps de productividad reddit' :
-                    'que necesitan los usuarios en software web moderno, estudios de necesidades reales';
-      
+      const query = type === 'benchmark' 
+        ? `${activeProject.name} UI UX architecture best practices modern design`
+        : type === 'quejas'
+        ? `${activeProject.name} common bugs errors user complaints issues`
+        : `${activeProject.name} core user needs business requirements workflows`;
+
       const results = await searchSourcesWithAI(query);
       setStudySourcesFound(results);
     } catch (error) {
@@ -202,7 +283,7 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
     setIsAddingSources(false);
   };
 
-  // ---- Funciones Cerebro (Chat) ----
+  // ---- Funciones Cerebro (Chat General) ----
   const handleToggleBrainSource = (id: string) => {
     setActiveBrainSources(prev => {
       const next = new Set(prev);
@@ -259,6 +340,7 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
     }
   };
 
+  // ---- Generación de Informes en Studio ----
   const handleGenerateReport = async (reportType: string) => {
     setIsGeneratingStudio(reportType);
     
@@ -269,19 +351,105 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
       
       const content = await generateReportFromSources(reportType, sourcesCtx, directivesCtx);
       
-      setStudioResults(prev => [{
+      const newReport: GeneratedReport = {
         id: Date.now().toString(),
         type: reportType,
         content: content,
         date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }, ...prev]);
+      };
+
+      const updatedReports = [newReport, ...studioResults];
+      setStudioResults(updatedReports);
       
+      if (activeProject?.id) {
+        storageService.saveProjectReports(activeProject.id, updatedReports);
+      }
+      
+      setViewingDocument(newReport);
       triggerCelebration();
       showToast(`✨ ${reportType} generado con éxito`, 'success');
     } catch (error: any) {
       showToast(`No se pudo generar el reporte: ${error.message}`, 'error');
     } finally {
       setIsGeneratingStudio(null);
+    }
+  };
+
+  // ---- Eliminar Informe ----
+  const handleDeleteReport = (reportId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const updated = studioResults.filter(r => r.id !== reportId);
+    setStudioResults(updated);
+    if (activeProject?.id) {
+      storageService.saveProjectReports(activeProject.id, updated);
+    }
+    if (viewingDocument?.id === reportId) {
+      setViewingDocument(null);
+    }
+    showToast('🗑️ Informe eliminado con éxito', 'info');
+  };
+
+  // ---- Descargar Informe (.md) ----
+  const handleDownloadReport = (report: { type: string, content: string }, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const blob = new Blob([report.content], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const sanitizedTitle = report.type.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    link.download = `${sanitizedTitle}_${Date.now()}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('⬇️ Informe descargado como Markdown (.md)', 'success');
+  };
+
+  // ---- Copiar Informe ----
+  const handleCopyReport = (content: string) => {
+    navigator.clipboard.writeText(content);
+    setCopiedDoc(true);
+    setTimeout(() => setCopiedDoc(false), 2500);
+    showToast('📋 Contenido del informe copiado al portapapeles', 'success');
+  };
+
+  // ---- Chat Específico sobre el Informe Abierto ----
+  const handleSendDocChatMessage = async (promptToSend?: string) => {
+    const text = promptToSend || docChatInput;
+    if (!text.trim() || isProcessingDocChat || !viewingDocument) return;
+
+    const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: text.trim() };
+    const history = [...docChatMessages];
+
+    setDocChatMessages(prev => [...prev, userMsg]);
+    if (!promptToSend) setDocChatInput('');
+    setIsProcessingDocChat(true);
+
+    try {
+      const allDirectives = storageService.getDirectives();
+      const directivesCtx = allDirectives.map((d, idx) => `### Directriz #${idx + 1}: ${d.title}\n${d.fullMarkdownContent || d.summary}`).join('\n\n');
+      
+      const response = await chatAboutReport(
+        viewingDocument.type,
+        viewingDocument.content,
+        userMsg.content,
+        history,
+        directivesCtx
+      );
+
+      setDocChatMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response
+      }]);
+    } catch (error: any) {
+      setDocChatMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `**Error:** ${error.message}`
+      }]);
+    } finally {
+      setIsProcessingDocChat(false);
     }
   };
 
@@ -375,25 +543,269 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
       }}>
         
         {viewingDocument ? (
-          /* ----- DOCUMENT VIEWER UI ----- */
-          <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-card)', zIndex: 20, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '24px', borderBottom: '1px solid var(--border-medium)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <FileText size={24} color="var(--accent-primary)" />
-                <h3 style={{ margin: 0, fontSize: '20px', color: 'var(--text-primary)' }}>{viewingDocument.type}</h3>
+          /* ----- DOCUMENT VIEWER & REPORT CHAT UI ----- */
+          <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-card)', zIndex: 20, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ 
+              padding: '16px 24px', 
+              borderBottom: '1px solid var(--border-medium)', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              background: 'rgba(255,255,255,0.02)',
+              gap: '16px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                <div style={{ 
+                  width: '36px', height: '36px', borderRadius: 'var(--radius-md)', 
+                  background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 
+                }}>
+                  <FileText size={20} color="#A78BFA" />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {viewingDocument.type}
+                  </h3>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {viewingDocument.date ? `Generado a las ${viewingDocument.date}` : 'Informe Activo'} • {viewingDocument.content.split(/\s+/).length} palabras
+                  </div>
+                </div>
               </div>
-              <button 
-                onClick={() => setViewingDocument(null)} 
-                className="btn btn-secondary" 
-                style={{ padding: '8px 16px' }}
-              >
-                <X size={16} /> Cerrar
-              </button>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                <button 
+                  onClick={() => handleCopyReport(viewingDocument.content)}
+                  className="btn btn-secondary" 
+                  style={{ padding: '7px 12px', fontSize: '12px', gap: '6px' }}
+                  title="Copiar contenido Markdown"
+                >
+                  {copiedDoc ? <Check size={14} color="#10B981" /> : <Copy size={14} />}
+                  <span>{copiedDoc ? 'Copiado' : 'Copiar'}</span>
+                </button>
+
+                <button 
+                  onClick={(e) => handleDownloadReport(viewingDocument, e)}
+                  className="btn btn-secondary" 
+                  style={{ padding: '7px 12px', fontSize: '12px', gap: '6px' }}
+                  title="Descargar como archivo Markdown (.md)"
+                >
+                  <Download size={14} />
+                  <span>Descargar .md</span>
+                </button>
+
+                <button 
+                  onClick={(e) => handleDeleteReport(viewingDocument.id, e)}
+                  className="btn btn-secondary" 
+                  style={{ 
+                    padding: '7px 12px', 
+                    fontSize: '12px', 
+                    gap: '6px',
+                    color: '#EF4444',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    background: 'rgba(239, 68, 68, 0.08)'
+                  }}
+                  title="Eliminar este informe permanentemente"
+                >
+                  <Trash2 size={14} />
+                  <span>Eliminar</span>
+                </button>
+
+                <button 
+                  onClick={() => setViewingDocument(null)} 
+                  className="btn btn-secondary" 
+                  style={{ padding: '7px 12px', fontSize: '12px', gap: '6px' }}
+                  title="Cerrar visor de documento"
+                >
+                  <X size={14} />
+                  <span>Cerrar</span>
+                </button>
+              </div>
             </div>
-            <div style={{ padding: '40px', overflowY: 'auto', flex: 1, fontSize: '15px', lineHeight: 1.8, color: 'var(--text-primary)', background: 'var(--bg-glass)' }}>
-              <div style={{ maxWidth: '800px', margin: '0 auto', whiteSpace: 'pre-wrap' }}>
-                {viewingDocument.content}
+
+            {/* Split Content Body: Upper = Document Content, Lower = Interactive AI Chat */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              
+              {/* UPPER SECTION: DOCUMENT VIEWER */}
+              <div style={{ 
+                flex: 1, 
+                minHeight: '220px',
+                overflowY: 'auto', 
+                padding: '24px 32px', 
+                fontSize: '14px', 
+                lineHeight: 1.7, 
+                color: 'var(--text-primary)', 
+                background: 'rgba(0, 0, 0, 0.15)',
+                borderBottom: '1px solid var(--border-medium)'
+              }}>
+                <div style={{ maxWidth: '850px', margin: '0 auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
+                  {viewingDocument.content}
+                </div>
               </div>
+
+              {/* LOWER SECTION: INTERACTIVE AI CHAT SPECIFICALLY ABOUT THIS REPORT */}
+              <div style={{ 
+                height: '340px', 
+                minHeight: '280px',
+                display: 'flex', 
+                flexDirection: 'column', 
+                background: 'var(--bg-glass-heavy)',
+                overflow: 'hidden'
+              }}>
+                {/* Chat Section Header */}
+                <div style={{ 
+                  padding: '10px 20px', 
+                  borderBottom: '1px solid var(--border-subtle)', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  background: 'rgba(255,255,255,0.01)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <BrainCircuit size={16} color="var(--accent-primary)" />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      Chat e Iteración sobre este Informe
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg-card)', padding: '2px 8px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-subtle)' }}>
+                      Gemini 1.5
+                    </span>
+                  </div>
+                  {docChatMessages.length > 1 && (
+                    <button 
+                      onClick={() => setDocChatMessages([docChatMessages[0]])}
+                      className="btn-icon" 
+                      title="Reiniciar chat de este informe"
+                      style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <RefreshCw size={12} /> Reiniciar conversación
+                    </button>
+                  )}
+                </div>
+
+                {/* 3 SUGGESTED CHANGES PILLS (ENCIMA DEL CHAT) */}
+                <div style={{ 
+                  padding: '8px 20px', 
+                  background: 'rgba(255, 255, 255, 0.02)', 
+                  borderBottom: '1px solid var(--border-subtle)',
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  gap: '8px',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Sparkles size={13} color="#F59E0B" /> Sugerencias de cambio:
+                  </span>
+                  {getReportSuggestions(viewingDocument.type).map((sug, sIdx) => (
+                    <button
+                      key={sIdx}
+                      onClick={() => handleSendDocChatMessage(sug)}
+                      disabled={isProcessingDocChat}
+                      className="btn btn-secondary"
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '11px',
+                        borderRadius: 'var(--radius-full)',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-medium)',
+                        color: 'var(--text-primary)',
+                        transition: 'all 0.2s ease',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                        e.currentTarget.style.background = 'rgba(139, 92, 246, 0.12)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.borderColor = 'var(--border-medium)';
+                        e.currentTarget.style.background = 'var(--bg-card)';
+                      }}
+                    >
+                      {sug}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Document Chat Messages Stream */}
+                <div style={{ flex: 1, padding: '16px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {docChatMessages.map(msg => (
+                    <div 
+                      key={msg.id} 
+                      style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                        gap: '4px'
+                      }}
+                    >
+                      <div style={{ 
+                        maxWidth: '85%', 
+                        padding: '12px 16px', 
+                        borderRadius: 'var(--radius-lg)', 
+                        background: msg.role === 'user' ? 'var(--accent-primary)' : 'var(--bg-card)', 
+                        color: msg.role === 'user' ? '#ffffff' : 'var(--text-primary)', 
+                        border: msg.role === 'user' ? 'none' : '1px solid var(--border-subtle)',
+                        fontSize: '13px', 
+                        lineHeight: 1.6, 
+                        whiteSpace: 'pre-wrap',
+                        boxShadow: 'var(--shadow-sm)'
+                      }}>
+                        {msg.content}
+                      </div>
+                    </div>
+                  ))}
+
+                  {isProcessingDocChat && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#A78BFA', padding: '8px 12px' }}>
+                      <RefreshCw size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
+                      <span style={{ fontSize: '12px', fontWeight: 500 }}>Analizando e iterando informe con Gemini...</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Document Chat Input Bar */}
+                <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border-subtle)', background: 'rgba(255, 255, 255, 0.01)' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '8px', 
+                    background: 'var(--bg-card)', 
+                    padding: '6px 12px', 
+                    borderRadius: 'var(--radius-full)', 
+                    border: '1px solid var(--border-medium)',
+                    alignItems: 'center'
+                  }}>
+                    <input 
+                      type="text"
+                      value={docChatInput}
+                      onChange={e => setDocChatInput(e.target.value)}
+                      placeholder="Escribe qué cambio, ajuste o ampliación necesitas sobre este informe..."
+                      className="form-input"
+                      style={{ flex: 1, background: 'transparent', border: 'none', padding: '4px 8px', outline: 'none', fontSize: '13px', color: 'var(--text-primary)' }}
+                      onKeyDown={e => { if (e.key === 'Enter') handleSendDocChatMessage(); }}
+                    />
+                    <button 
+                      onClick={() => handleSendDocChatMessage()} 
+                      disabled={!docChatInput.trim() || isProcessingDocChat}
+                      className="btn btn-primary" 
+                      style={{ 
+                        borderRadius: 'var(--radius-full)', 
+                        padding: '8px 14px', 
+                        height: '32px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        gap: '6px'
+                      }}
+                    >
+                      <Send size={13} />
+                      <span>Enviar</span>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
             </div>
           </div>
         ) : isAddingSources ? (
@@ -518,29 +930,31 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
                     <>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Resultados de Búsqueda</h4>
-                          <button 
-                            type="button"
-                            onClick={handleToggleSelectAllWebResults}
-                            className="btn btn-secondary"
-                            style={{ 
-                              fontSize: '12px', 
-                              padding: '4px 12px', 
-                              borderRadius: 'var(--radius-sm)',
-                              border: '1px solid var(--border-medium)',
-                              background: selectedWebResults.size === webSearchResults.length ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                              color: selectedWebResults.size === webSearchResults.length ? '#10B981' : 'var(--text-secondary)'
-                            }}
-                          >
-                            {selectedWebResults.size === webSearchResults.length && webSearchResults.length > 0 
-                              ? 'Deseleccionar todo' 
-                              : 'Seleccionar todo'}
-                          </button>
+                          <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Resultados Web</h4>
+                          {webSearchResults.length > 0 && !isSearchingWeb && (
+                            <button 
+                              type="button"
+                              onClick={handleToggleSelectAllWebResults}
+                              className="btn btn-secondary"
+                              style={{ 
+                                fontSize: '12px', 
+                                padding: '4px 12px', 
+                                borderRadius: 'var(--radius-sm)',
+                                border: '1px solid var(--border-medium)',
+                                background: selectedWebResults.size === webSearchResults.length ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+                                color: selectedWebResults.size === webSearchResults.length ? '#38BDF8' : 'var(--text-secondary)'
+                              }}
+                            >
+                              {selectedWebResults.size === webSearchResults.length && webSearchResults.length > 0 
+                                ? 'Deseleccionar todo' 
+                                : 'Seleccionar todo'}
+                            </button>
+                          )}
                         </div>
                         {selectedWebResults.size > 0 && <button onClick={handleAddSelectedWebSources} className="btn btn-primary">Añadir {selectedWebResults.size} fuentes</button>}
                       </div>
                       {webSearchResults.map(res => {
-                        const domain = res.url.split('/')[2] || 'example.com';
+                        const domain = res.url.split('/')[2] || 'google.com';
                         return (
                           <div 
                             key={res.id} 
@@ -590,7 +1004,7 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
             </div>
           </div>
         ) : (
-          /* ----- CHAT UI ----- */
+          /* ----- GENERAL CHAT UI ----- */
           <>
             <div style={{ padding: '24px', borderBottom: '1px solid var(--border-medium)', background: 'rgba(255,255,255,0.02)' }}>
               <div style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)' }}>Chat Inteligente</div>
@@ -804,26 +1218,41 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {studioResults.map(res => (
                   <div key={res.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: 'var(--radius-sm)', background: 'rgba(56, 189, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: 'var(--radius-sm)', background: 'rgba(56, 189, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <FileText size={16} color="#38BDF8" />
                       </div>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{res.type}</div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {res.type}
+                        </div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Hoy a las {res.date}</div>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '4px' }}>
+                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                       <button 
                         onClick={() => setViewingDocument(res)}
                         className="btn-icon" 
-                        title="Ver Documento"
+                        title="Ver y debatir informe"
                         style={{ padding: '6px' }}
                       >
                         <Eye size={16} color="var(--text-primary)" />
                       </button>
-                      <button className="btn-icon" title="Descargar" style={{ padding: '6px' }}>
+                      <button 
+                        onClick={(e) => handleDownloadReport(res, e)}
+                        className="btn-icon" 
+                        title="Descargar .md" 
+                        style={{ padding: '6px' }}
+                      >
                         <Download size={16} color="var(--text-muted)" />
+                      </button>
+                      <button 
+                        onClick={(e) => handleDeleteReport(res.id, e)}
+                        className="btn-icon" 
+                        title="Eliminar informe" 
+                        style={{ padding: '6px' }}
+                      >
+                        <Trash2 size={16} color="#EF4444" />
                       </button>
                     </div>
                   </div>
@@ -852,7 +1281,7 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
             position: 'fixed',
             bottom: '24px',
             right: '24px',
-            background: toast.type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(16, 185, 129, 0.9)',
+            background: toast.type === 'error' ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)',
             color: '#ffffff',
             padding: '12px 20px',
             borderRadius: 'var(--radius-lg)',
