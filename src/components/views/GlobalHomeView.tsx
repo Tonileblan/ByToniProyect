@@ -10,7 +10,7 @@ interface GlobalHomeViewProps {
   tasks: Task[];
   onSelectProject: (projectId: string) => void;
   onOpenNewProject: () => void;
-  onOpenAICopilot: () => void;
+  onOpenCerebro?: () => void;
 }
 
 export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
@@ -18,7 +18,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
   tasks,
   onSelectProject,
   onOpenNewProject,
-  onOpenAICopilot
+  onOpenCerebro
 }) => {
   const suiteProjects = projects.filter(p => p.category.includes('Suite Toni') || p.category.includes('Herramienta'));
   const commercialProjects = projects.filter(p => p.category.includes('Comercial') || p.category.includes('Prototipo'));
@@ -63,10 +63,12 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button onClick={onOpenAICopilot} className="btn btn-ai">
-            <Sparkles size={15} />
-            <span>Consultar IA Copilot</span>
-          </button>
+          {onOpenCerebro && (
+            <button onClick={onOpenCerebro} className="btn btn-ai">
+              <Sparkles size={15} />
+              <span>Consultar Cerebro</span>
+            </button>
+          )}
           <button onClick={onOpenNewProject} className="btn btn-primary">
             <Plus size={15} />
             <span>Nuevo Proyecto (Briefing)</span>

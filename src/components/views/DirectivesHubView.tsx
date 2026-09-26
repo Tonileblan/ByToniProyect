@@ -426,15 +426,17 @@ export const DirectivesHubView: React.FC<DirectivesHubViewProps> = ({
                   </div>
                 )}
 
-                {/* Summary */}
-                <p style={{
+                {/* Full Markdown Content (replaces short summary per user request) */}
+                <div style={{
                   fontSize: '12px',
                   color: 'var(--text-secondary)',
                   lineHeight: 1.45,
-                  marginBottom: '14px'
+                  marginBottom: '14px',
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: 'var(--font-mono)'
                 }}>
-                  {dir.summary}
-                </p>
+                  {dir.fullMarkdownContent || dir.summary}
+                </div>
 
                 {/* Mandatory Rules snippet */}
                 <div style={{

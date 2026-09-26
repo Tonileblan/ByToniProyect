@@ -34,7 +34,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     { id: 'calendar', label: 'Calendario', icon: Calendar },
     { id: 'dashboard', label: 'Panel', icon: BarChart2 },
     { id: 'directives', label: 'Directrices', icon: BookOpen },
-    { id: 'ai_studio', label: '🚀 Blueprint & Notebook', icon: Sparkles }
+    { id: 'ai_studio', label: '🚀 Blueprint & Cerebro', icon: Sparkles }
   ];
 
   return (
@@ -140,46 +140,15 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         </div>
       </div>
 
-      {/* View Switcher Tabs */}
+      {/* Bottom row: Filters (We moved the view tabs to the sidebar) */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         borderTop: '1px solid var(--border-subtle)',
-        paddingTop: '4px'
+        paddingTop: '12px',
+        paddingBottom: '12px'
       }}>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id as ViewTab)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 14px',
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  fontFamily: 'var(--font-sans)',
-                  fontSize: '13px',
-                  fontWeight: isActive ? 600 : 500,
-                  cursor: 'pointer',
-                  transition: 'all var(--transition-fast)'
-                }}
-              >
-                <Icon size={15} color={isActive ? 'var(--accent-primary)' : 'currentColor'} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Filter controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <select
             value={filterOptions.priority}

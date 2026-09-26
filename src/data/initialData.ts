@@ -449,11 +449,11 @@ export const INITIAL_PROJECTS: Project[] = [
     category: 'Suite Toni (Propio / I+D)',
     status: 'En Desarrollo',
     appType: 'Web & Frontend',
-    tagline: 'Centro de mando y clon de Asana para desarrollo ágil de apps asistido por IA',
+    tagline: 'Centro de mando para desarrollo ágil de apps asistido por IA',
     problem: 'Orquestar de forma centralizada todas las apps de Toni, sincronizar directrices maestras y acelerar la creación con prompts de IA listos para ejecutar.',
     targetAudience: 'Toni (desarrollo propio) y subagentes de IA de Antigravity',
     coreFeatures: [
-      'Multi-vistas tipo Asana (Lista, Tablero Kanban con Drag & Drop, Cronograma, Calendario, Panel)',
+      'Multi-vistas (Lista, Tablero Kanban con Drag & Drop, Cronograma, Calendario, Panel)',
       'Drawer lateral de detalle de tareas con checklist de directrices de Drive y adjuntos de archivos/audio/imágenes',
       'Gestor integral de directrices de Drive (editar, copiar, etiquetar por tipo de app, eliminar)',
       'Generador interactivo de Prompts Maestros para Antigravity',
@@ -564,7 +564,7 @@ export const INITIAL_PROJECTS: Project[] = [
 export const INITIAL_SECTIONS: Section[] = [
   { id: 'sec_1', projectId: 'proj_bytoni', title: '🚀 Fase 1: Inicialización & Especificación', order: 1 },
   { id: 'sec_2', projectId: 'proj_bytoni', title: '🗄️ Fase 2: Backend Supabase & RLS', order: 2 },
-  { id: 'sec_3', projectId: 'proj_bytoni', title: '💻 Fase 3: Frontend Asana Views & Kanban Drag & Drop', order: 3 },
+  { id: 'sec_3', projectId: 'proj_bytoni', title: '💻 Fase 3: Frontend Views & Kanban Drag & Drop', order: 3 },
   { id: 'sec_4', projectId: 'proj_bytoni', title: '🤖 Fase 4: Orquestador Directrices Drive & Prompts', order: 4 },
   { id: 'sec_5', projectId: 'proj_bytoni', title: '📂 Fase 5: Documentación Drive & Lanzamiento', order: 5 }
 ];

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Search, Plus, Sparkles, Moon, Sun, Bell, 
   FolderPlus, CheckSquare, BookOpen, ExternalLink,
-  HelpCircle, MessageSquare
+  HelpCircle, MessageSquare, Menu
 } from 'lucide-react';
 import { Project } from '../../types/project';
 
@@ -10,24 +10,28 @@ interface TopNavbarProps {
   currentProject: Project | null;
   onOpenNewTask: () => void;
   onOpenNewProject: () => void;
-  onOpenAICopilot: () => void;
   onOpenHelpChat?: () => void;
+  onOpenCerebro?: () => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
+  isSidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({
   currentProject,
   onOpenNewTask,
   onOpenNewProject,
-  onOpenAICopilot,
   onOpenHelpChat,
+  onOpenCerebro,
   searchQuery,
   onSearchChange,
   theme,
-  onToggleTheme
+  onToggleTheme,
+  isSidebarOpen,
+  onToggleSidebar
 }) => {
   const [showCreateMenu, setShowCreateMenu] = useState(false);
 
@@ -45,6 +49,11 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     }}>
       {/* Left: Brand & Project Name */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {onToggleSidebar && (
+          <button onClick={onToggleSidebar} className="btn-icon" style={{ marginLeft: '-12px', color: 'var(--text-secondary)' }} title="Toggle Sidebar">
+            <Menu size={20} />
+          </button>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
             width: '32px',
@@ -189,15 +198,17 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </button>
         )}
 
-        {/* AI Copilot Trigger */}
-        <button 
-          className="btn btn-ai"
-          onClick={onOpenAICopilot}
-          style={{ padding: '6px 12px', fontSize: '12px', height: '34px' }}
-        >
-          <Sparkles size={14} />
-          <span>IA Copilot</span>
-        </button>
+        {/* Cerebro Trigger */}
+        {onOpenCerebro && (
+          <button 
+            className="btn btn-ai"
+            onClick={onOpenCerebro}
+            style={{ padding: '6px 12px', fontSize: '12px', height: '34px' }}
+          >
+            <Sparkles size={14} />
+            <span>Cerebro</span>
+          </button>
+        )}
 
         {/* Theme Toggle */}
         <button 

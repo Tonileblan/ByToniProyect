@@ -1,91 +1,131 @@
-import { Project, Task, DirectiveItem } from '../types/project';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+const genAI = new GoogleGenerativeAI(apiKey);
+
+export const generateReportFromSources = async (reportType: string, sourcesContext: string) => {
+  if (!apiKey) {
+    throw new Error('Falta la clave API de Gemini. Por favor, crea un archivo .env en la raíz del proyecto y añade VITE_GEMINI_API_KEY=tu_clave_aqui');
+  }
+
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+  const prompt = `
+Eres un analista experto en desarrollo de software, arquitectura de sistemas y diseño de productos digitales. 
+Tu tarea es generar un documento de tipo: "${reportType}".
+
+Aquí tienes la información y contexto recopilado de varias fuentes del usuario:
+---
+${sourcesContext || 'No hay fuentes seleccionadas. Usa tu conocimiento general para estructurar el documento ideal para un proyecto de software estándar.'}
+---
+
+Instrucciones:
+1. Genera el "${reportType}" solicitado en formato Markdown.
+2. Hazlo estructurado, profesional y muy completo.
+3. Si el tipo de informe es "Informe Maestro", debe incluir el objetivo del proyecto, funcionalidades clave y próximos pasos.
+4. Si es "Especificación Técnica", debe incluir la arquitectura sugerida, el stack tecnológico y los requisitos técnicos.
+`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  } catch (error: any) {
+    console.error('Error generating report:', error);
+    throw new Error(error.message || 'Error al conectar con la IA');
+  }
+};
+
+export const chatWithBrain = async (message: string, historyMessages: {role: 'user' | 'assistant', content: string}[], sourcesContext: string) => {
+  if (!apiKey) {
+    throw new Error('Falta la clave API de Gemini. Añade VITE_GEMINI_API_KEY a tu archivo .env');
+  }
+
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-1.5-flash',
+    systemInstruction: `Eres el "Cerebro Central", un asistente de IA para desarrollo de aplicaciones. 
+Utiliza el siguiente contexto recopilado de las fuentes para ayudar al usuario con su aplicación:
+
+CONTEXTO DE FUENTES:
+${sourcesContext || 'Sin contexto específico.'}
+
+Responde siempre en formato Markdown, de manera proactiva y profesional.`
+  });
+
+  const history = historyMessages.map(msg => ({
+    role: msg.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: msg.content }]
+  }));
+
+  const chat = model.startChat({ history });
+
+  try {
+    const result = await chat.sendMessage(message);
+    const response = await result.response;
+    return response.text();
+  } catch (error: any) {
+    console.error('Error in chat:', error);
+    throw new Error(error.message || 'Error al conectar con la IA');
+  }
+};
 
 export const aiService = {
-  generateProjectPrompt(project: Project, directives: DirectiveItem[]): string {
-    const relevantDirectives = directives.filter(
-      d => d.category === 'General Drive' || 
-      (project.appType.includes('Web') && d.category === 'Web') ||
-      (project.appType.includes('Trading') && d.category === 'Trading') ||
-      (project.appType.includes('Mobile') && d.category === 'Mobile') ||
-      (project.appType.includes('SaaS') && d.category === 'SaaS')
-    );
+  generateTaskPrompt: (task: any, project: any, directives: any[]) => {
+    return `
+PROYECTO: ${project?.name}
+DESCRIPCIÓN: ${project?.description}
 
-    const directivesSummary = relevantDirectives.map((d, index) => {
-      return `### ${index + 1}. ${d.title}\n${d.summary}\n- **Reglas clave:**\n${d.rules.map(r => `  * ${r}`).join('\n')}`;
-    }).join('\n\n');
+DIRECTIVAS ACTIVAS:
+${directives?.map(d => `- ${d.title}: ${d.description}`).join('\n')}
 
-    return `======================================================================
-PROMPT MAESTRO DE INICIALIZACIÓN Y DESARROLLO (BY TONI)
-======================================================================
+TAREA ACTUAL:
+Título: ${task?.title}
+Descripción: ${task?.description}
 
-Actúa como Antigravity / Subagente Experto Senior en Clean Architecture.
-Vamos a desarrollar el proyecto "${project.name}" cumpliendo estrictamente nuestra metodología de trabajo y directrices maestras.
-
-----------------------------------------------------------------------
-1. BRIEFING Y DEFINICIÓN DEL PROYECTO
-----------------------------------------------------------------------
-- Nombre del Proyecto: ${project.name}
-- Slug / Código Identificador: ${project.slug}
-- Categoría: ${project.category}
-- Estado Inicial: ${project.status}
-- Tipo de Aplicación: ${project.appType}
-- Tagline: ${project.tagline}
-- Problema Principal a Resolver: ${project.problem}
-- Público Objetivo (Target): ${project.targetAudience}
-
-Funcionalidades Core (MVP):
-${project.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
-
-Módulos y Stack:
-- Base de Datos: ${project.database} (Esquema: ${project.supabaseSchema || project.slug})
-- Autenticación: ${project.auth}
-- Integración de IA: ${project.aiIntegration} (Modelo: ${project.aiProvider})
-- Modelo de Negocio: ${project.businessModel}
-- Frontend Stack: ${project.frontendStack}
-- Estilo y Sistema UI: ${project.uiStyle}
-
-----------------------------------------------------------------------
-2. DIRECTRICES MAESTRAS APLICABLES AL PROYECTO
-----------------------------------------------------------------------
-${directivesSummary}
-
-----------------------------------------------------------------------
-3. INSTRUCCIONES DE EJECUCIÓN PASO A PASO
-----------------------------------------------------------------------
-1. Inicializa la estructura del proyecto siguiendo Clean Architecture (Domain / Data / UI).
-2. Genera los scripts SQL de Supabase con esquema aislado "${project.supabaseSchema || project.slug}" y RLS estricto.
-3. Desarrolla los componentes UI con estética premium Dark Glassmorphism, micro-animaciones e iconos de Lucide.
-4. Genera las vistas legales (/privacidad, /aviso-legal, /terminos) con los datos del titular Antonio Javier García García (DNI 34799350M, Madrid) y la firma "By Toni" en el pie de página.
-5. Actualiza Registro_Proyectos_Toni.csv y crea la ficha INFO_PROYECTO.md en Google Drive.
+Genera el código o la solución necesaria para esta tarea respetando las directivas del proyecto.
 `;
-  },
+  }
+};
 
-  generateTaskPrompt(task: Task, project: Project, directives: DirectiveItem[]): string {
-    const checkedList = [
-      task.directivesChecked.supabaseSchema ? '✓ Esquema Supabase Aislado (' + (project.supabaseSchema || project.slug) + ') con RLS' : null,
-      task.directivesChecked.securityAuth ? '✓ Seguridad y Auth (JWT / Middleware)' : null,
-      task.directivesChecked.aiStreaming ? '✓ IA Streaming Server-Sent Events (SSE)' : null,
-      task.directivesChecked.rgpdLegal ? '✓ Privacidad RGPD (Toni García) y Sello By Toni' : null,
-      task.directivesChecked.driveSync ? '✓ Registro en Google Drive (CSV y INFO_PROYECTO.md)' : null
-    ].filter(Boolean).join('\n- ');
+export const searchSourcesWithAI = async (topic: string) => {
+  if (!apiKey) {
+    throw new Error('Falta la clave API de Gemini. Añade VITE_GEMINI_API_KEY a tu archivo .env');
+  }
 
-    const subtasksList = task.subtasks.length > 0 
-      ? `\nSubtareas a resolver:\n${task.subtasks.map((st, i) => `  [${st.completed ? 'x' : ' '}] ${i + 1}. ${st.title}`).join('\n')}`
-      : '';
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-1.5-flash',
+    generationConfig: { responseMimeType: "application/json" }
+  });
 
-    return `### ⚡ PROMPT DE TAREA PARA ANTIGRAVITY: "${task.title}"
+  const prompt = `
+Eres un motor de búsqueda experto. Devuelve exactamente 5 enlaces REALES Y EXISTENTES (artículos conocidos, documentación oficial, repositorios o hilos famosos) sobre: "${topic}".
+Debes devolver un array JSON válido con la siguiente estructura:
+[
+  {
+    "id": "gen_unico_1",
+    "title": "Título del artículo",
+    "url": "https://url-real-y-valida.com/...",
+    "snippet": "Breve resumen descriptivo."
+  }
+]
+`;
 
-**Contexto del Proyecto:** ${project.name} (${project.category})
-**Tipo:** ${project.appType} | **Stack:** ${project.frontendStack}
-
-**Objetivo de la Tarea:**
-${task.description}
-${subtasksList}
-
-**Directrices que DEBES cumplir en esta tarea:**
-- ${checkedList || 'Aplica las directrices generales del proyecto.'}
-
-**Instrucción para el Agente:**
-Desarrolla el código necesario de forma modular, con tipado estricto en TypeScript, manejo limpio de errores, tests y diseño visual alineado con el sistema ${project.uiStyle}.`;
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text().trim();
+    
+    // Si Gemini devuelve markdown a pesar del mimeType (a veces pasa), lo limpiamos
+    if (text.startsWith('\`\`\`json')) {
+      text = text.replace(/^\`\`\`json\n/, '').replace(/\n\`\`\`$/, '');
+    }
+    if (text.startsWith('\`\`\`')) {
+      text = text.replace(/^\`\`\`\n/, '').replace(/\n\`\`\`$/, '');
+    }
+    
+    return JSON.parse(text);
+  } catch (error: any) {
+    console.error('Error in AI search:', error);
+    throw new Error(error.message || 'Error al conectar con la IA de Google.');
   }
 };

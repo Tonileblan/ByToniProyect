@@ -6,16 +6,16 @@ import { TopNavbar } from './components/layout/TopNavbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { ProjectHeader } from './components/projects/ProjectHeader';
 import { ListView } from './components/views/ListView';
-import { BoardView } from './components/views/BoardView';
+import { DualBoardView } from './presentation/views/DualBoardView';
 import { TimelineView } from './components/views/TimelineView';
 import { CalendarView } from './components/views/CalendarView';
 import { DashboardView } from './components/views/DashboardView';
 import { DirectivesHubView } from './components/views/DirectivesHubView';
-import { AIPromptStudioView } from './components/views/AIPromptStudioView';
+import { BrainStudioView } from './components/views/BrainStudioView';
 import { MyTasksView } from './components/views/MyTasksView';
 import { GlobalHomeView } from './components/views/GlobalHomeView';
 import { TaskDetailDrawer } from './components/tasks/TaskDetailDrawer';
-import { NewProjectModal } from './components/projects/NewProjectModal';
+import { NewProjectWizard } from './presentation/components/projects/NewProjectWizard';
 import { NewTaskModal } from './components/tasks/NewTaskModal';
 import { AICopilotModal } from './components/common/AICopilotModal';
 import { AppHelpChatModal } from './components/common/AppHelpChatModal';
@@ -34,9 +34,9 @@ export function App() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
-  const [isAICopilotModalOpen, setIsAICopilotModalOpen] = useState(false);
   const [isHelpChatModalOpen, setIsHelpChatModalOpen] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -395,15 +395,19 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
   return (
     <div className="app-container">
       {/* Left Sidebar */}
-      <Sidebar
-        projects={projects}
-        activeProjectId={activeProjectId}
-        activeMainView={activeMainView}
-        onSelectProject={handleSelectProject}
-        onSelectMainView={(v) => setActiveMainView(v)}
-        onOpenNewProject={() => setIsNewProjectModalOpen(true)}
-        totalPendingTasks={totalPendingTasks}
-      />
+      {isSidebarOpen && (
+        <Sidebar
+          projects={projects}
+          activeProjectId={activeProjectId}
+          activeMainView={activeMainView}
+          activeProjectTab={activeProjectTab}
+          onSelectProject={handleSelectProject}
+          onSelectMainView={(v) => setActiveMainView(v)}
+          onSelectProjectTab={(t) => setActiveProjectTab(t)}
+          onOpenNewProject={() => setIsNewProjectModalOpen(true)}
+          totalPendingTasks={totalPendingTasks}
+        />
+      )}
 
       {/* Main Work Area */}
       <div className="main-content">
@@ -412,12 +416,14 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
           currentProject={activeProject}
           onOpenNewTask={() => setIsNewTaskModalOpen(true)}
           onOpenNewProject={() => setIsNewProjectModalOpen(true)}
-          onOpenAICopilot={() => setIsAICopilotModalOpen(true)}
           onOpenHelpChat={() => setIsHelpChatModalOpen(true)}
+          onOpenCerebro={() => setActiveMainView('ai_studio')}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           theme={theme}
           onToggleTheme={toggleTheme}
+          isSidebarOpen={isSidebarOpen}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
 
         {/* Project Header (when in project view) */}
@@ -442,7 +448,7 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
               tasks={tasks}
               onSelectProject={handleSelectProject}
               onOpenNewProject={() => setIsNewProjectModalOpen(true)}
-              onOpenAICopilot={() => setIsAICopilotModalOpen(true)}
+              onOpenCerebro={() => setActiveMainView('ai_studio')}
             />
           )}
 
@@ -466,12 +472,9 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
           )}
 
           {activeMainView === 'ai_studio' && activeProject && (
-            <AIPromptStudioView
+            <BrainStudioView
               projects={projects}
               activeProject={activeProject}
-              directives={directives}
-              tasks={tasks}
-              onSelectProject={handleSelectProject}
               onUpdateProject={handleUpdateProject}
             />
           )}
@@ -490,15 +493,9 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
               )}
 
               {activeProjectTab === 'board' && (
-                <BoardView
-                  project={activeProject}
+                <DualBoardView
+                  projectId={activeProject.id}
                   tasks={projectTasks}
-                  onSelectTask={(t) => setSelectedTask(t)}
-                  onUpdateTaskStatus={handleUpdateTaskStatus}
-                  onAddTaskToStatus={handleAddTaskToStatus}
-                  onOpenHelpChat={() => setIsHelpChatModalOpen(true)}
-                  isAdminMode={isAdminMode}
-                  onToggleAdminMode={() => setIsAdminMode(!isAdminMode)}
                 />
               )}
 
@@ -534,12 +531,9 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
               )}
 
               {activeProjectTab === 'ai_studio' && (
-                <AIPromptStudioView
+                <BrainStudioView
                   projects={projects}
                   activeProject={activeProject}
-                  directives={directives}
-                  tasks={tasks}
-                  onSelectProject={handleSelectProject}
                   onUpdateProject={handleUpdateProject}
                 />
               )}
@@ -567,7 +561,7 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
       )}
 
       {/* Modals */}
-      <NewProjectModal
+      <NewProjectWizard
         isOpen={isNewProjectModalOpen}
         onClose={() => setIsNewProjectModalOpen(false)}
         onSaveProject={handleSaveNewProject}
@@ -582,13 +576,6 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
           onSaveTask={(newTask) => setTasks(prev => [...prev, newTask])}
         />
       )}
-
-      <AICopilotModal
-        isOpen={isAICopilotModalOpen}
-        onClose={() => setIsAICopilotModalOpen(false)}
-        activeProject={activeProject}
-        directives={directives}
-      />
 
       {/* App Help & Feedback Chat Modal */}
       {activeProject && (

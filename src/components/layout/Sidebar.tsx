@@ -2,7 +2,8 @@ import React from 'react';
 import { 
   Home, CheckCircle2, Inbox, FolderKanban, Plus, 
   BookOpen, Sparkles, Database, ExternalLink, HardDrive, 
-  Layers, Shield, TrendingUp, Smartphone, Globe
+  Layers, Shield, TrendingUp, Smartphone, Globe,
+  List, Kanban, Calendar, BarChart2, Clock
 } from 'lucide-react';
 import { Project } from '../../types/project';
 
@@ -10,8 +11,10 @@ interface SidebarProps {
   projects: Project[];
   activeProjectId: string | null;
   activeMainView: 'dashboard' | 'my_tasks' | 'project' | 'directives' | 'ai_studio';
+  activeProjectTab?: string;
   onSelectProject: (projectId: string) => void;
-  onSelectMainView: (view: 'dashboard' | 'my_tasks' | 'directives' | 'ai_studio') => void;
+  onSelectMainView: (view: 'dashboard' | 'my_tasks' | 'project' | 'directives' | 'ai_studio') => void;
+  onSelectProjectTab?: (tab: any) => void;
   onOpenNewProject: () => void;
   totalPendingTasks: number;
 }
@@ -20,8 +23,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   projects,
   activeProjectId,
   activeMainView,
+  activeProjectTab,
   onSelectProject,
   onSelectMainView,
+  onSelectProjectTab,
   onOpenNewProject,
   totalPendingTasks
 }) => {
@@ -105,146 +110,140 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Projects Section */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 8px 8px 8px',
-            fontSize: '11px',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: 'var(--text-muted)'
-          }}>
-            <span>Proyectos ({projects.length})</span>
-            <button
-              onClick={onOpenNewProject}
-              className="btn-icon"
-              style={{ width: '20px', height: '20px' }}
-              title="Nuevo Proyecto (Briefing Ágil)"
-            >
-              <Plus size={14} />
-            </button>
+        {/* Vistas del Proyecto (Only visible when a project is selected) */}
+        {activeProjectId !== null && activeProjectTab && onSelectProjectTab && (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 8px 8px 8px',
+              fontSize: '11px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: 'var(--text-muted)'
+            }}>
+              <span>Vistas de Proyecto</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              {[
+                { id: 'list', label: 'Lista', icon: List },
+                { id: 'board', label: 'Tablero', icon: Kanban },
+                { id: 'timeline', label: 'Cronograma', icon: Clock },
+                { id: 'calendar', label: 'Calendario', icon: Calendar },
+                { id: 'dashboard', label: 'Panel', icon: BarChart2 },
+                { id: 'directives', label: 'Directrices', icon: BookOpen },
+                { id: 'ai_studio', label: 'Cerebro Central', icon: Sparkles }
+              ].map(tab => {
+                const Icon = tab.icon;
+                const isActive = (activeMainView === 'project' && activeProjectTab === tab.id) || 
+                                 (activeMainView === 'ai_studio' && tab.id === 'ai_studio') ||
+                                 (activeMainView === 'directives' && tab.id === 'directives');
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      if (tab.id === 'ai_studio') {
+                        onSelectMainView('ai_studio');
+                      } else if (tab.id === 'directives') {
+                        onSelectMainView('directives');
+                      } else {
+                        onSelectMainView('project');
+                        onSelectProjectTab(tab.id);
+                      }
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-md)',
+                      background: isActive ? 'var(--bg-card-hover)' : 'transparent',
+                      color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      border: isActive ? '1px solid var(--border-medium)' : '1px solid transparent',
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-sans)',
+                      fontSize: '13px',
+                      fontWeight: isActive ? 600 : 500,
+                      width: '100%',
+                      textAlign: 'left',
+                      transition: 'background var(--transition-fast)'
+                    }}
+                  >
+                    <Icon size={16} color={isActive ? 'var(--accent-primary)' : 'currentColor'} />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
+        )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {projects.map(p => {
-              const isActive = activeMainView === 'project' && activeProjectId === p.id;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => onSelectProject(p.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '7px 10px',
-                    borderRadius: 'var(--radius-md)',
-                    background: isActive ? 'var(--bg-card-hover)' : 'transparent',
-                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    border: isActive ? '1px solid var(--border-medium)' : '1px solid transparent',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-sans)',
-                    fontSize: '13px',
-                    fontWeight: isActive ? 600 : 400,
-                    width: '100%',
-                    textAlign: 'left',
-                    transition: 'background var(--transition-fast)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                    <div style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: p.color || '#6366F1',
-                      flexShrink: 0
-                    }} />
-                    <span style={{ 
-                      overflow: 'hidden', 
-                      textOverflow: 'ellipsis', 
-                      whiteSpace: 'nowrap' 
-                    }}>
-                      {p.name}
-                    </span>
-                  </div>
+        {/* We no longer need the global Methodology section as they are part of Project Views */}
+        {activeProjectId === null && (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{
+              padding: '0 8px 8px 8px',
+              fontSize: '11px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: 'var(--text-muted)'
+            }}>
+              Metodología & IA
+            </div>
 
-                  <span style={{
-                    fontSize: '10px',
-                    color: 'var(--text-muted)',
-                    fontFamily: 'var(--font-mono)'
-                  }}>
-                    {p.category.includes('Comercial') ? 'com' : 'mia'}
-                  </span>
-                </button>
-              );
-            })}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <button
+                onClick={() => onSelectMainView('directives')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  background: activeMainView === 'directives' ? 'var(--bg-card-hover)' : 'transparent',
+                  color: activeMainView === 'directives' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  border: activeMainView === 'directives' ? '1px solid var(--border-medium)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  width: '100%',
+                  textAlign: 'left'
+                }}
+              >
+                <BookOpen size={16} color="#F59E0B" />
+                <span>Directrices Maestras</span>
+              </button>
+
+              <button
+                onClick={() => onSelectMainView('ai_studio')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  background: activeMainView === 'ai_studio' ? 'var(--bg-card-hover)' : 'transparent',
+                  color: activeMainView === 'ai_studio' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  border: activeMainView === 'ai_studio' ? '1px solid var(--border-medium)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  width: '100%',
+                  textAlign: 'left'
+                }}
+              >
+                <Sparkles size={16} color="var(--accent-cyan)" />
+                <span>Cerebro Central</span>
+              </button>
+            </div>
           </div>
-        </div>
-
-        {/* Metodología & Directrices */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{
-            padding: '0 8px 8px 8px',
-            fontSize: '11px',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: 'var(--text-muted)'
-          }}>
-            Metodología & IA
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <button
-              onClick={() => onSelectMainView('directives')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '8px 12px',
-                borderRadius: 'var(--radius-md)',
-                background: activeMainView === 'directives' ? 'var(--bg-card-hover)' : 'transparent',
-                color: activeMainView === 'directives' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                border: activeMainView === 'directives' ? '1px solid var(--border-medium)' : '1px solid transparent',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-sans)',
-                fontSize: '13px',
-                fontWeight: 500,
-                width: '100%',
-                textAlign: 'left'
-              }}
-            >
-              <BookOpen size={16} color="#F59E0B" />
-              <span>Directrices Maestras</span>
-            </button>
-
-            <button
-              onClick={() => onSelectMainView('ai_studio')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '8px 12px',
-                borderRadius: 'var(--radius-md)',
-                background: activeMainView === 'ai_studio' ? 'var(--bg-card-hover)' : 'transparent',
-                color: activeMainView === 'ai_studio' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                border: activeMainView === 'ai_studio' ? '1px solid var(--border-medium)' : '1px solid transparent',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-sans)',
-                fontSize: '13px',
-                fontWeight: 500,
-                width: '100%',
-                textAlign: 'left'
-              }}
-            >
-              <Sparkles size={16} color="#06B6D4" />
-              <span>Blueprint Antigravity & Notebook</span>
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Google Drive Status Footer */}
