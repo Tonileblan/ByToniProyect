@@ -10,6 +10,7 @@ import {
 import { Project } from '../../types/project';
 import { triggerCelebration } from '../../common/ConfettiCelebration';
 import { generateReportFromSources, chatWithBrain, searchSourcesWithAI } from '../../services/aiService';
+import { storageService } from '../../services/storageService';
 
 interface BrainStudioViewProps {
   projects: Project[];
@@ -261,8 +262,11 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
     setIsGeneratingStudio(reportType);
     
     try {
-      const context = getSourcesContextString();
-      const content = await generateReportFromSources(reportType, context);
+      const sourcesCtx = getSourcesContextString();
+      const allDirectives = storageService.getDirectives();
+      const directivesCtx = allDirectives.map((d, idx) => `### Directriz #${idx + 1}: ${d.title}\n${d.fullMarkdownContent || d.summary}`).join('\n\n');
+      
+      const content = await generateReportFromSources(reportType, sourcesCtx, directivesCtx);
       
       setStudioResults(prev => [{
         id: Date.now().toString(),
@@ -272,6 +276,7 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
       }, ...prev]);
       
       triggerCelebration();
+      showToast(`✨ ${reportType} generado con éxito`, 'success');
     } catch (error: any) {
       showToast(`No se pudo generar el reporte: ${error.message}`, 'error');
     } finally {
@@ -669,41 +674,55 @@ export const BrainStudioView: React.FC<BrainStudioViewProps> = ({ projects, acti
 
         <div style={{ padding: '20px', overflowY: 'auto' }}>
           
+          {/* Highlighted Master Report Hero Box */}
           <div style={{ 
-            background: 'rgba(99, 102, 241, 0.1)', 
-            border: '1px solid rgba(99, 102, 241, 0.2)', 
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.16) 0%, rgba(99, 102, 241, 0.1) 100%)', 
+            border: '1px solid rgba(139, 92, 246, 0.3)', 
             padding: '16px', 
             borderRadius: 'var(--radius-lg)',
-            marginBottom: '24px',
+            marginBottom: '20px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            gap: '12px'
           }}>
-             <div style={{ fontSize: '12px', color: '#818CF8', fontWeight: 600 }}>Novedad: Ahora puedes crear Informes interactivos.</div>
-             <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '11px', height: 'auto' }}>Probar</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <FileCode2 size={22} color="#A78BFA" />
+              <div>
+                <div style={{ fontSize: '13px', color: '#C4B5FD', fontWeight: 700 }}>Informe Maestro</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Documento base para crear la App</div>
+              </div>
+            </div>
+            <button 
+              onClick={() => handleGenerateReport('Informe Maestro')} 
+              disabled={!!isGeneratingStudio}
+              className="btn btn-primary" 
+              style={{ 
+                padding: '6px 14px', 
+                fontSize: '11px', 
+                fontWeight: 600, 
+                height: 'auto',
+                whiteSpace: 'nowrap',
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)'
+              }}
+            >
+              {isGeneratingStudio === 'Informe Maestro' ? 'Generando...' : 'Generar'}
+            </button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
             
-            {/* Core Generators */}
-            <button onClick={() => handleGenerateReport('Informe Maestro')} className="btn btn-secondary" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}>
-              <FileCode2 size={24} color="#8B5CF6" />
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Informe Maestro</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Documento base para crear la App</div>
-              </div>
-            </button>
-
-            <button onClick={() => handleGenerateReport('Especificación Técnica')} className="btn btn-secondary" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}>
-              <BookOpen size={24} color="#10B981" />
+            {/* Other Core Generators */}
+            <button onClick={() => handleGenerateReport('Especificación Técnica')} className="btn btn-secondary" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}>
+              <BookOpen size={22} color="#10B981" />
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Spec. Técnica</div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Requisitos y arquitectura del sistema</div>
               </div>
             </button>
             
-            <button onClick={() => handleGenerateReport('Mapa Mental de Arquitectura')} className="btn btn-secondary" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}>
-              <Globe size={24} color="#38BDF8" />
+            <button onClick={() => handleGenerateReport('Mapa Mental de Arquitectura')} className="btn btn-secondary" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'var(--bg-card)' }}>
+              <Globe size={22} color="#38BDF8" />
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Mapa Mental</div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Esquema visual del proyecto</div>

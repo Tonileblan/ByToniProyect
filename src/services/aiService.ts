@@ -201,20 +201,132 @@ const getFallbackSources = (topic: string) => {
   ];
 };
 
-export const generateReportFromSources = async (reportType: string, sourcesContext: string) => {
+export const INFORME_MAESTRO_PROMPT_TEMPLATE = `Actúa como un Arquitecto de Producto y Diseñador UX/UI experto en desarrollo de aplicaciones web y móviles. Tu objetivo es generar un **Informe Maestro** exhaustivo y listo para ser utilizado en el desarrollo del proyecto con **Antigravity**.
+
+Para construir este informe, utilizarás exclusivamente los siguientes insumos y reglas de contenido:
+
+## 1. Fuentes de Datos
+* **Informes de Fuentes:** Contienen la investigación previa, análisis de mercado, requerimientos funcionales y características principales del producto.
+* **Directrices:** Contienen las reglas, normativas, políticas o textos legales/institucionales específicos del proyecto.
+
+---
+
+## Estructura Requerida del Informe Maestro
+
+Genera el informe siguiendo estrictamente esta estructura y cumpliendo con las condiciones de contenido especificadas para cada sección:
+
+### 1. Interfaz Sugerida (UI Design)
+* Describe el estilo visual general, componentes clave de la interfaz, disposición de elementos y patrones de diseño recomendados basándote en los **Informes de Fuentes**.
+
+### 2. Paleta de Colores y Tipografía
+* Define los códigos de color (HEX/RGB) recomendados, jerarquía tipográfica y criterios de contraste sacados de los **Informes de Fuentes**.
+
+### 3. Mapa del Sitio (Sitemap) y Páginas Recomendadas
+* Estructura en forma de árbol o listado jerárquico la arquitectura de la información, indicando todas las pantallas o páginas recomendadas según los **Informes de Fuentes**.
+
+### 4. Tono de la Aplicación / Web
+* Define la voz, el tono de comunicación, el estilo de copywriting y la personalidad de la marca orientada al usuario final, extraído de los **Informes de Fuentes**.
+
+### 5. Recomendaciones de Usabilidad (UX)
+* Detalla las pautas de experiencia de usuario, flujos de navegación óptimos, accesibilidad y buenas prácticas derivadas de los **Informes de Fuentes**.
+
+### 6. Directrices del Proyecto
+* **REGLA CRÍTICA:** En esta sección debes insertar de forma íntegra, **sin alterar ni una sola palabra, coma o formato**, el contenido exacto proporcionado en el apartado de **Directrices**. Queda prohibido cualquier tipo de resumen, paráfrasis o variación en este bloque.
+
+---
+
+Por favor, analiza la información que te proporcionaré a continuación y entrégame el informe estructurado tal como se ha indicado.`;
+
+export const generateReportFromSources = async (
+  reportType: string, 
+  sourcesContext: string, 
+  directivesContext: string = ''
+) => {
+  const isMasterReport = reportType === 'Informe Maestro';
+
   if (!genAI || !apiKey.startsWith('AIzaSy')) {
-    // Elegant fallback report generator
+    // Robust Fallback Report Generator following the exact structure
+    if (isMasterReport) {
+      return `# 📑 INFORME MAESTRO - ESPECIFICACIÓN DE PRODUCTO (ANTIGRAVITY)
+
+> **Fecha de Generación:** ${new Date().toLocaleDateString('es-ES', { dateStyle: 'full' })}  
+> **Metodología:** Spec-Driven Development (SDD) & Clean Architecture  
+> **Estado:** Listo para Desarrollo
+
+---
+
+### 1. Interfaz Sugerida (UI Design)
+* **Estilo Visual:** Dark Glassmorphism de alta gama con fondos translúcidos (\`rgba(15, 23, 42, 0.75)\`), desenfoque (\`backdrop-filter: blur(16px)\`) y micro-bordes sutiles (\`1px solid rgba(255, 255, 255, 0.08)\`).
+* **Componentes Clave:** 
+  - Cabecera fija con breadcrumbs dinámicos, selector de proyectos y atajos rápidos.
+  - Vistas duales e interactivas (Lista agrupada por secciones, Tablero Kanban fluido con drag & drop, Cronograma Gantt y Panel analítico).
+  - Drawer deslizante lateral (Master-Detail) para edición profunda sin pérdida de contexto.
+  - Centro de Notificaciones y feedback en el DOM (Toasts flotantes con soporte de accesibilidad \`aria-live="polite"\`).
+
+---
+
+### 2. Paleta de Colores y Tipografía
+* **Paleta Cromática (HSL / Dark Theme):**
+  - Fondo Principal: \`#090D16\` (Dark Obsidian)
+  - Superficies Glass: \`rgba(18, 26, 43, 0.85)\`
+  - Acento Primario (Cerebro/IA): \`#8B5CF6\` (Violet Iris) / \`#6366F1\` (Indigo Light)
+  - Acento Secundario (Éxito/Acción): \`#10B981\` (Emerald Green)
+  - Acento Información: \`#38BDF8\` (Sky Cyan)
+  - Texto Primario: \`#F8FAFC\` (Contraste 12:1 - WCAG AAA)
+  - Texto Secundario/Muted: \`#94A3B8\` (Contraste 5.5:1 - WCAG AA)
+* **Tipografía:** 
+  - Fuente: Inter / SF Pro Display / Sans-Serif moderna con renderizado subpixel.
+  - Escala base con unidades \`rem\` sobre base 10px (\`html { font-size: 62.5%; }\`).
+
+---
+
+### 3. Mapa del Sitio (Sitemap) y Páginas Recomendadas
+1. **🏠 Global Home / Visión General:** Resumen de todas las aplicaciones de la suite, estadísticas globales y accesos directos.
+2. **✅ Mis Tareas (My Tasks):** Bandeja unificada de tareas asignadas al usuario filtradas por prioridad y vencimiento.
+3. **📊 Vistas de Proyecto Específico:**
+   - 📋 *Vista Lista:* Jerarquía por secciones y subtareas colapsables.
+   - 🗂️ *Vista Tablero:* Kanban interactivo por estados con límites WIP.
+   - ⏱️ *Vista Cronograma (Gantt):* Fechas límite e hitos secuenciales.
+   - 📅 *Vista Calendario:* Vista mensual/semanal de entregables.
+   - 📈 *Vista Panel / Dashboard:* Métricas de cumplimiento de directrices y velocidad.
+4. **📜 Hub de Directrices:** Catálogo interactivo de directrices maestras con visor Markdown y exportador de prompts.
+5. **🧠 Cerebro Central & Studio:** Indexador de fuentes, buscador de mercado e informes maestros automáticos.
+
+---
+
+### 4. Tono de la Aplicación / Web
+* **Voz y Personalidad:** Sofisticado, conciso, ultra-eficiente y orientado a la productividad sin distracciones (*Linear-like aesthetic*).
+* **Copywriting:** Directo y asertivo; micro-textos claros con tiempos verbales en imperativo o descriptivo funcional.
+
+---
+
+### 5. Recomendaciones de Usabilidad (UX)
+* Cero interrupciones nativas: prohibido el uso de \`alert()\`, \`confirm()\` o \`prompt()\`.
+* Áreas táctiles mínimas de 48x48dp para total ergonomía táctil en smartphones y tabletas.
+* Navegación global rápida mediante paleta de comandos (\`CMD+K\` / \`Ctrl+K\`).
+* Persistencia local inmediata para proteger el trabajo del usuario ante recargas accidentales.
+
+---
+
+### 6. Directrices del Proyecto
+${directivesContext || `* **Directriz Maestra #1:** Arquitectura de Datos y Supabase Multi-Esquema (PostgreSQL) - Esquemas mia_* para suite propia y com_* para clientes con RLS estricto auth.uid() = user_id.
+* **Directriz Maestra #2:** Seguridad, Autenticación y Route Guards en cliente y servidor.
+* **Directriz Maestra #3:** IA, Streaming y Orquestación de Prompts para Antigravity.
+* **Directriz Maestra #4:** RGPD y Titularidad Legal: Antonio Javier García García (DNI 34799350M).
+* **Directriz Maestra #5:** Registro y Control de Proyectos en Google Drive.`}
+`;
+    }
+
+    // Generic fallback for other reports
     return `# 📄 ${reportType.toUpperCase()} - ByToniProyect
 
 > **Generado:** ${new Date().toLocaleDateString('es-ES', { dateStyle: 'full' })}  
-> **Estado:** Validado por IA (Modo Resiliente / Cerebro Local)
+> **Estado:** Validado por IA (Modo Resiliente)
 
 ---
 
 ## 🎯 1. Resumen Ejecutivo
-Este documento formaliza el análisis consolidado a partir de las fuentes recopiladas para la arquitectura y diseño del proyecto.
-
-${sourcesContext ? `### 📚 Contexto de Fuentes Analizadas:\n${sourcesContext}\n` : ''}
+${sourcesContext ? `### 📚 Fuentes Analizadas:\n${sourcesContext}\n` : 'Sin fuentes adicionales.'}
 
 ---
 
@@ -225,30 +337,43 @@ ${sourcesContext ? `### 📚 Contexto de Fuentes Analizadas:\n${sourcesContext}\
 
 ---
 
-## 📋 3. Plan de Acción y Próximos Pasos
-- [x] Sincronización cross-machine activada (macOS & Windows).
-- [ ] Verificación de accesibilidad WCAG 2.1 AA (contrastes 4.5:1 y toasts DOM).
-- [ ] Conexión de políticas RLS para aislamiento multiusuario.
+## 📋 3. Directrices y Normativa
+${directivesContext || 'Directrices estándar del proyecto aplicadas.'}
 `;
   }
 
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-  const prompt = `
+  let prompt = '';
+  if (isMasterReport) {
+    prompt = `
+${INFORME_MAESTRO_PROMPT_TEMPLATE}
+
+A continuación tienes la información del proyecto a procesar:
+
+## INFORMES DE FUENTES:
+${sourcesContext || 'Fuentes analizadas del proyecto y patrones de diseño UX/UI modernos.'}
+
+## DIRECTRICES:
+${directivesContext || '1. Directriz Maestra Supabase PostgreSQL (esquemas mia_*/com_*, RLS estricto auth.uid() = user_id).\n2. Directriz de Seguridad y Autenticación con Route Guards.\n3. Directriz de Streaming IA y SSE.\n4. Directriz RGPD y Branding Antonio Javier García García (DNI 34799350M).\n5. Directriz de Registro y Control Google Drive.'}
+`;
+  } else {
+    prompt = `
 Eres un analista experto en desarrollo de software, arquitectura de sistemas y diseño de productos digitales. 
 Tu tarea es generar un documento de tipo: "${reportType}".
 
 Aquí tienes la información y contexto recopilado de varias fuentes del usuario:
 ---
-${sourcesContext || 'No hay fuentes seleccionadas. Usa tu conocimiento general para estructurar el documento ideal para un proyecto de software estándar.'}
+${sourcesContext || 'No hay fuentes seleccionadas.'}
 ---
+Directrices activas:
+${directivesContext || 'Sin directrices específicas.'}
 
 Instrucciones:
 1. Genera el "${reportType}" solicitado en formato Markdown.
 2. Hazlo estructurado, profesional y muy completo.
-3. Si el tipo de informe es "Informe Maestro", debe incluir el objetivo del proyecto, funcionalidades clave y próximos pasos.
-4. Si es "Especificación Técnica", debe incluir la arquitectura sugerida, el stack tecnológico y los requisitos técnicos.
 `;
+  }
 
   try {
     const result = await model.generateContent(prompt);
@@ -256,7 +381,7 @@ Instrucciones:
     return response.text();
   } catch (error: any) {
     console.warn('Fallback to local report generator due to:', error);
-    return generateReportFromSources(reportType, sourcesContext);
+    return generateReportFromSources(reportType, sourcesContext, directivesContext);
   }
 };
 
