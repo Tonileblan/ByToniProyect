@@ -112,6 +112,78 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
+        {/* Lista de Proyectos */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 8px 8px 8px',
+            fontSize: '11px',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: 'var(--text-muted)'
+          }}>
+            <span>Proyectos ({projects.length})</span>
+            <button
+              onClick={onOpenNewProject}
+              className="btn-icon"
+              style={{ padding: '2px', color: 'var(--accent-primary)', cursor: 'pointer', background: 'none', border: 'none' }}
+              title="Crear Nuevo Proyecto"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            {projects.map(proj => {
+              const isSelected = activeProjectId === proj.id && activeMainView === 'project';
+              return (
+                <button
+                  key={proj.id}
+                  onClick={() => {
+                    onSelectProject(proj.id);
+                    onSelectMainView('project');
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '7px 10px',
+                    borderRadius: 'var(--radius-md)',
+                    background: isSelected ? 'var(--bg-card-hover)' : 'transparent',
+                    color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    border: isSelected ? '1px solid var(--border-medium)' : '1px solid transparent',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: isSelected ? 600 : 400,
+                    width: '100%',
+                    textAlign: 'left',
+                    transition: 'var(--transition-fast)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ 
+                      width: '8px', 
+                      height: '8px', 
+                      borderRadius: '50%', 
+                      backgroundColor: proj.color || '#6366f1',
+                      flexShrink: 0
+                    }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {proj.name}
+                    </span>
+                  </div>
+                  {isSelected && (
+                    <span style={{ fontSize: '10px', color: 'var(--accent-cyan)' }}>●</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Vistas del Proyecto (Only visible when a project is selected) */}
         {activeProjectId !== null && activeProjectTab && onSelectProjectTab && (
           <div style={{ marginBottom: '24px' }}>

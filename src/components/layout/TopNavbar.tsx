@@ -8,6 +8,8 @@ import { Project, UserProfile } from '../../types/project';
 
 interface TopNavbarProps {
   currentProject: Project | null;
+  projects?: Project[];
+  onSelectProject?: (projectId: string) => void;
   currentUser?: UserProfile;
   onOpenNewTask: () => void;
   onOpenNewProject: () => void;
@@ -25,6 +27,8 @@ interface TopNavbarProps {
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({
   currentProject,
+  projects = [],
+  onSelectProject,
   currentUser,
   onOpenNewTask,
   onOpenNewProject,
@@ -41,6 +45,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 }) => {
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showProjectMenu, setShowProjectMenu] = useState(false);
 
   return (
     <header style={{
@@ -54,7 +59,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       zIndex: 50,
       position: 'relative'
     }}>
-      {/* Left: Brand & Project Name */}
+      {/* Left: Brand & Project Selector */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {onToggleSidebar && (
           <button onClick={onToggleSidebar} className="btn-icon" style={{ marginLeft: '-12px', color: 'var(--text-secondary)' }} title="Toggle Sidebar">
@@ -97,6 +102,93 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Project Selector Dropdown */}
+        {projects.length > 0 && onSelectProject && (
+          <div style={{ position: 'relative' }}>
+            <button 
+              className="btn btn-secondary"
+              onClick={() => setShowProjectMenu(!showProjectMenu)}
+              style={{ 
+                padding: '5px 12px', 
+                fontSize: '12px', 
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'rgba(99, 102, 241, 0.1)',
+                border: '1px solid rgba(99, 102, 241, 0.3)',
+                color: 'var(--text-primary)'
+              }}
+              title="Cambiar de proyecto activo"
+            >
+              <div style={{ 
+                width: '8px', 
+                height: '8px', 
+                borderRadius: '50%', 
+                backgroundColor: currentProject?.color || '#6366f1' 
+              }} />
+              <span>{currentProject?.name || 'Seleccionar Proyecto'}</span>
+              <ChevronDown size={14} color="var(--text-muted)" />
+            </button>
+
+            {showProjectMenu && (
+              <div 
+                className="glass-dropdown"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: 0,
+                  width: '240px',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '6px',
+                  zIndex: 100
+                }}
+              >
+                <div style={{ padding: '4px 8px 6px 8px', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  Proyectos Disponibles ({projects.length})
+                </div>
+                {projects.map(p => (
+                  <button
+                    key={p.id}
+                    className="btn btn-secondary"
+                    style={{ 
+                      width: '100%', 
+                      justifyContent: 'space-between', 
+                      border: 'none', 
+                      background: p.id === currentProject?.id ? 'var(--bg-card-hover)' : 'transparent', 
+                      padding: '8px 10px',
+                      fontSize: '12px'
+                    }}
+                    onClick={() => {
+                      setShowProjectMenu(false);
+                      onSelectProject(p.id);
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: p.color || '#6366f1', flexShrink: 0 }} />
+                      <span style={{ fontWeight: p.id === currentProject?.id ? 700 : 400 }}>{p.name}</span>
+                    </div>
+                    <span className="badge badge-purple" style={{ fontSize: '9px', padding: '1px 5px' }}>{p.category.includes('Suite') ? 'Suite' : p.category.includes('Comercial') ? 'Cliente' : 'App'}</span>
+                  </button>
+                ))}
+                <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: '4px', paddingTop: '4px' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ width: '100%', justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '6px 10px', fontSize: '11px', color: 'var(--accent-primary)' }}
+                    onClick={() => {
+                      setShowProjectMenu(false);
+                      onOpenNewProject();
+                    }}
+                  >
+                    <Plus size={13} />
+                    <span>+ Crear Nuevo Proyecto</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Global Create Button Dropdown */}
         <div style={{ position: 'relative' }}>

@@ -21,7 +21,8 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
   onOpenCerebro
 }) => {
   const suiteProjects = projects.filter(p => p.category.includes('Suite Toni') || p.category.includes('Herramienta'));
-  const commercialProjects = projects.filter(p => p.category.includes('Comercial') || p.category.includes('Prototipo'));
+  const commercialProjects = projects.filter(p => p.category.includes('Comercial') || p.category.includes('Cliente') || p.category.includes('Prototipo'));
+  const customProjects = projects.filter(p => !suiteProjects.some(s => s.id === p.id) && !commercialProjects.some(c => c.id === p.id));
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
@@ -320,6 +321,87 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Custom & New Projects Section */}
+      {customProjects.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              ✨ Nuevos Proyectos & Aplicaciones ({customProjects.length})
+            </h2>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Proyectos registrados</span>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gap: '16px'
+          }}>
+            {customProjects.map(proj => (
+              <div
+                key={proj.id}
+                onClick={() => onSelectProject(proj.id)}
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '20px',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '12px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-highlight)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: proj.color || '#6366f1' }} />
+                      <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                        {proj.name}
+                      </h3>
+                    </div>
+                    <span className="badge badge-indigo" style={{ fontSize: '10px' }}>
+                      {proj.category || proj.appType}
+                    </span>
+                  </div>
+
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.4, margin: '0 0 10px 0' }}>
+                    {proj.tagline || 'Proyecto creado en la Suite By Toni'}
+                  </p>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: '10px',
+                  borderTop: '1px solid var(--border-subtle)',
+                  fontSize: '11px',
+                  color: 'var(--text-muted)'
+                }}>
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>{proj.slug}</span>
+                  <span className={`badge ${
+                    proj.status === 'En Producción' ? 'badge-emerald' :
+                    proj.status === 'En Desarrollo' ? 'badge-cyan' : 'badge-amber'
+                  }`}>
+                    {proj.status || 'Idea / Planificación'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

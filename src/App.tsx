@@ -24,13 +24,13 @@ import { SettingsModal } from './components/settings/SettingsModal';
 import { triggerCelebration } from './common/ConfettiCelebration';
 
 export function App() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [sections, setSections] = useState<Section[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [directives, setDirectives] = useState<DirectiveItem[]>([]);
+  const [projects, setProjects] = useState<Project[]>(() => storageService.getProjects());
+  const [sections, setSections] = useState<Section[]>(() => storageService.getSections());
+  const [tasks, setTasks] = useState<Task[]>(() => storageService.getTasks());
+  const [directives, setDirectives] = useState<DirectiveItem[]>(() => storageService.getDirectives());
   
   const [activeMainView, setActiveMainView] = useState<'dashboard' | 'my_tasks' | 'project' | 'directives' | 'ai_studio'>('project');
-  const [activeProjectId, setActiveProjectId] = useState<string>('proj_bytoni');
+  const [activeProjectId, setActiveProjectId] = useState<string>(() => storageService.getActiveProjectId());
   const [activeProjectTab, setActiveProjectTab] = useState<ViewTab>('board');
   
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -52,7 +52,7 @@ export function App() {
     tag: 'all'
   });
 
-  // Hydrate from Storage
+  // Hydrate from Storage on mount if needed
   useEffect(() => {
     const loadedProjects = storageService.getProjects();
     const loadedSections = storageService.getSections();
@@ -60,14 +60,14 @@ export function App() {
     const loadedDirectives = storageService.getDirectives();
     const savedActiveProjId = storageService.getActiveProjectId();
 
-    setProjects(loadedProjects);
-    setSections(loadedSections);
-    setTasks(loadedTasks);
-    setDirectives(loadedDirectives);
-    setActiveProjectId(savedActiveProjId);
+    if (loadedProjects && loadedProjects.length > 0) setProjects(loadedProjects);
+    if (loadedSections && loadedSections.length > 0) setSections(loadedSections);
+    if (loadedTasks && loadedTasks.length > 0) setTasks(loadedTasks);
+    if (loadedDirectives && loadedDirectives.length > 0) setDirectives(loadedDirectives);
+    if (savedActiveProjId) setActiveProjectId(savedActiveProjId);
   }, []);
 
-  // Save changes to storage
+  // Sync changes to storage
   useEffect(() => {
     if (projects.length > 0) storageService.saveProjects(projects);
   }, [projects]);
@@ -270,15 +270,12 @@ export function App() {
   };
 
   const handleSaveNewProject = (newProject: Project) => {
-    setProjects(prev => [...prev, newProject]);
-    
     // Auto generate 3 default sections for the new project
     const defaultSections: Section[] = [
       { id: `sec_${Date.now()}_1`, projectId: newProject.id, title: '🚀 Fase 1: Especificación & Setup', order: 1 },
       { id: `sec_${Date.now()}_2`, projectId: newProject.id, title: '💻 Fase 2: Desarrollo Core & UI', order: 2 },
       { id: `sec_${Date.now()}_3`, projectId: newProject.id, title: '⚡ Fase 3: Directrices Drive & QA', order: 3 }
     ];
-    setSections(prev => [...prev, ...defaultSections]);
 
     // Add initial setup task
     const initialTask: Task = {
@@ -313,7 +310,24 @@ export function App() {
       activities: [{ id: `act_${Date.now()}`, user: 'Toni', action: 'Inicializó el proyecto', timestamp: new Date().toISOString() }],
       createdAt: new Date().toISOString()
     };
-    setTasks(prev => [...prev, initialTask]);
+
+    setProjects(prev => {
+      const next = [...prev.filter(p => p.id !== newProject.id), newProject];
+      storageService.saveProjects(next);
+      return next;
+    });
+
+    setSections(prev => {
+      const next = [...prev, ...defaultSections];
+      storageService.saveSections(next);
+      return next;
+    });
+
+    setTasks(prev => {
+      const next = [...prev, initialTask];
+      storageService.saveTasks(next);
+      return next;
+    });
 
     handleSelectProject(newProject.id);
     setIsNewProjectModalOpen(false);
@@ -423,6 +437,8 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
         {/* Top Navbar */}
         <TopNavbar
           currentProject={activeProject}
+          projects={projects}
+          onSelectProject={handleSelectProject}
           currentUser={currentUser}
           onOpenNewTask={() => setIsNewTaskModalOpen(true)}
           onOpenNewProject={() => setIsNewProjectModalOpen(true)}
