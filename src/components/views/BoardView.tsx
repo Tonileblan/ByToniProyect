@@ -296,12 +296,13 @@ export const BoardView: React.FC<BoardViewProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border-medium)',
+        background: 'var(--bg-glass)',
+        border: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-lg)',
-        padding: '12px 18px',
+        padding: '10px 16px',
         flexWrap: 'wrap',
-        gap: '12px'
+        gap: '10px',
+        boxShadow: 'var(--shadow-xs)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
@@ -571,7 +572,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
                       onClick={() => onSelectTask(task)}
                       style={{
                         background: 'var(--bg-card)',
-                        border: '1px solid var(--border-medium)',
+                        border: '1px solid var(--border-subtle)',
                         borderRadius: 'var(--radius-md)',
                         padding: '12px',
                         cursor: effectiveAdmin ? 'grab' : 'pointer',
@@ -581,18 +582,20 @@ export const BoardView: React.FC<BoardViewProps> = ({
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '8px',
-                        boxShadow: isDragging ? 'var(--shadow-lg)' : 'var(--shadow-sm)'
+                        boxShadow: isDragging ? 'var(--shadow-md)' : 'none'
                       }}
                       onMouseEnter={(e) => {
                         if (!isDragging) {
-                          e.currentTarget.style.borderColor = 'var(--border-highlight)';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.borderColor = 'var(--border-medium)';
+                          e.currentTarget.style.transform = 'translateY(-1px)';
+                          e.currentTarget.style.boxShadow = 'var(--shadow-xs)';
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (!isDragging) {
-                          e.currentTarget.style.borderColor = 'var(--border-medium)';
+                          e.currentTarget.style.borderColor = 'var(--border-subtle)';
                           e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
                         }
                       }}
                     >

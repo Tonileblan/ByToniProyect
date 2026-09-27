@@ -7,7 +7,7 @@ import { TopNavbar } from './components/layout/TopNavbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { ProjectHeader } from './components/projects/ProjectHeader';
 import { ListView } from './components/views/ListView';
-import { DualBoardView } from './presentation/views/DualBoardView';
+import { BoardView } from './components/views/BoardView';
 import { TimelineView } from './components/views/TimelineView';
 import { CalendarView } from './components/views/CalendarView';
 import { DashboardView } from './components/views/DashboardView';
@@ -252,6 +252,23 @@ export function App() {
           activities: [
             ...t.activities,
             { id: `act_${Date.now()}`, user: 'Toni', action: `Cambió estado a ${nextStatus}`, timestamp: new Date().toISOString() }
+          ]
+        };
+      }
+      return t;
+    }));
+  };
+
+  const handleUpdateTaskStatus = (taskId: string, status: TaskStatus) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        if (status === 'completed' && t.status !== 'completed') triggerCelebration();
+        return {
+          ...t,
+          status,
+          activities: [
+            ...t.activities,
+            { id: `act_${Date.now()}`, user: 'Toni', action: `Movió estado a ${status}`, timestamp: new Date().toISOString() }
           ]
         };
       }
@@ -573,6 +590,8 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
               onSelectTask={(t) => setSelectedTask(t)}
               onToggleTaskStatus={handleToggleTaskStatus}
               onOpenNewTask={() => setIsNewTaskModalOpen(true)}
+              onUpdateTaskStatus={handleUpdateTaskStatus}
+              onAddTaskToStatus={handleAddTaskToStatus}
             />
           )}
 
@@ -607,9 +626,13 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
               )}
 
               {activeProjectTab === 'board' && (
-                <DualBoardView
-                  projectId={activeProject.id}
+                <BoardView
+                  project={activeProject}
                   tasks={projectTasks}
+                  onSelectTask={(t) => setSelectedTask(t)}
+                  onUpdateTaskStatus={handleUpdateTaskStatus}
+                  onAddTaskToStatus={handleAddTaskToStatus}
+                  onOpenHelpChat={() => setIsHelpChatModalOpen(true)}
                 />
               )}
 
