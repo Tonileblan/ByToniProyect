@@ -474,6 +474,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
                   justifyContent: 'space-between',
                   padding: '10px 14px',
                   borderBottom: '1px solid var(--border-subtle)',
+                  borderTop: `3px solid ${col.color}`,
                   background: col.bg,
                   cursor: effectiveAdmin ? 'grab' : 'default',
                   userSelect: 'none'
@@ -573,6 +574,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
                       style={{
                         background: 'var(--bg-card)',
                         border: '1px solid var(--border-subtle)',
+                        borderLeft: `3px solid ${col.color}`,
                         borderRadius: 'var(--radius-md)',
                         padding: '12px',
                         cursor: effectiveAdmin ? 'grab' : 'pointer',
