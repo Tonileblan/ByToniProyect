@@ -1,6 +1,7 @@
 import { Project, Section, Task, DirectiveItem, UserProfile, UserSettings, ReportPromptsConfig } from '../types/project';
 import { INITIAL_PROJECTS, INITIAL_SECTIONS, INITIAL_TASKS, INITIAL_DIRECTIVES } from '../data/initialData';
 import { DEFAULT_REPORT_PROMPTS, PROMPT_INFORME_MAESTRO } from './aiService';
+import { supabaseService } from './supabaseService';
 
 const STORAGE_KEYS = {
   PROJECTS: 'bytoni_projects_v2',
@@ -123,7 +124,7 @@ export const storageService = {
     this.saveSettings({ geminiApiKey: key });
   },
 
-  // --- Projects, Sections, Tasks & Directives ---
+  // --- Projects, Sections, Tasks & Directives (Optimistic Local + Remote Sync) ---
   getProjects(): Project[] {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.PROJECTS);
@@ -135,8 +136,11 @@ export const storageService = {
     return INITIAL_PROJECTS;
   },
 
-  saveProjects(projects: Project[]): void {
+  saveProjects(projects: Project[], syncToRemote: boolean = true): void {
     localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
+    if (syncToRemote) {
+      supabaseService.upsertProjects(projects).catch(() => {});
+    }
   },
 
   getSections(): Section[] {
@@ -150,8 +154,11 @@ export const storageService = {
     return INITIAL_SECTIONS;
   },
 
-  saveSections(sections: Section[]): void {
+  saveSections(sections: Section[], syncToRemote: boolean = true): void {
     localStorage.setItem(STORAGE_KEYS.SECTIONS, JSON.stringify(sections));
+    if (syncToRemote) {
+      supabaseService.upsertSections(sections).catch(() => {});
+    }
   },
 
   getTasks(): Task[] {
@@ -165,8 +172,11 @@ export const storageService = {
     return INITIAL_TASKS;
   },
 
-  saveTasks(tasks: Task[]): void {
+  saveTasks(tasks: Task[], syncToRemote: boolean = true): void {
     localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
+    if (syncToRemote) {
+      supabaseService.upsertTasks(tasks).catch(() => {});
+    }
   },
 
   getDirectives(): DirectiveItem[] {
@@ -185,8 +195,11 @@ export const storageService = {
     return INITIAL_DIRECTIVES;
   },
 
-  saveDirectives(directives: DirectiveItem[]): void {
+  saveDirectives(directives: DirectiveItem[], syncToRemote: boolean = true): void {
     localStorage.setItem(STORAGE_KEYS.DIRECTIVES, JSON.stringify(directives));
+    if (syncToRemote) {
+      supabaseService.upsertDirectives(directives).catch(() => {});
+    }
   },
 
   getActiveProjectId(): string {
@@ -267,4 +280,3 @@ export const storageService = {
     localStorage.removeItem(STORAGE_KEYS.SETTINGS);
   }
 };
-

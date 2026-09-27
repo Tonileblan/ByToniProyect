@@ -45,24 +45,26 @@ export const supabaseSyncService = {
           category: p.category,
           status: p.status,
           appType: p.app_type,
-          tagline: p.tagline,
-          problem: p.problem,
-          targetAudience: p.target_audience,
+          tagline: p.tagline || '',
+          problem: p.problem || '',
+          targetAudience: p.target_audience || '',
           coreFeatures: p.core_features || [],
-          database: p.database,
-          auth: p.auth,
-          aiIntegration: p.ai_integration,
-          aiProvider: p.ai_provider,
-          businessModel: p.business_model,
-          frontendStack: p.frontend_stack,
-          uiStyle: p.ui_style,
-          color: p.color,
-          icon: p.icon,
+          database: p.database || 'Supabase PostgreSQL',
+          auth: p.auth || 'Supabase Auth',
+          aiIntegration: p.ai_integration || '',
+          aiProvider: p.ai_provider || 'Google Gemini 2.5 Flash',
+          businessModel: p.business_model || '',
+          frontendStack: p.frontend_stack || 'React + Vite',
+          uiStyle: p.ui_style || 'Dark Glassmorphism',
+          color: p.color || '#6366F1',
+          icon: p.icon || 'FolderKanban',
           supabaseSchema: p.supabase_schema,
           driveFolderUrl: p.drive_folder_url,
-          createdAt: p.created_at
+          googleNotebookUrl: p.google_notebook_url,
+          researchInsights: p.research_insights,
+          createdAt: p.created_at || new Date().toISOString()
         }));
-        storageService.saveProjects(formattedProjects);
+        storageService.saveProjects(formattedProjects, false);
       }
 
       // 2. Sections
@@ -79,7 +81,7 @@ export const supabaseSyncService = {
           title: s.title,
           order: s.order_index
         }));
-        storageService.saveSections(formattedSections);
+        storageService.saveSections(formattedSections, false);
       }
 
       // 3. Tasks
@@ -92,22 +94,38 @@ export const supabaseSyncService = {
         const formattedTasks: Task[] = tasks.map(t => ({
           id: t.id,
           projectId: t.project_id,
-          sectionId: t.section_id,
+          sectionId: t.section_id || '',
           title: t.title,
-          description: t.description,
-          status: t.status,
-          priority: t.priority,
-          assignedTo: t.assigned_to,
-          assignedAvatar: t.assigned_avatar,
-          dueDate: t.due_date,
+          description: t.description || '',
+          status: t.status || 'ideas_proposals',
+          priority: t.priority || 'Media',
+          assignedTo: t.assigned_to || 'Toni',
+          assignedAvatar: t.assigned_avatar || '👨‍💻',
+          dueDate: t.due_date || '',
           startDate: t.start_date,
-          estimatedHours: t.estimated_hours,
-          subtasks: [],
-          tags: t.tags || [],
-          directivesChecked: t.directives_checked || {},
-          createdAt: t.created_at
+          estimatedHours: t.estimated_hours || 0,
+          subtasks: Array.isArray(t.subtasks) ? t.subtasks : [],
+          tags: Array.isArray(t.tags) ? t.tags : [],
+          directivesChecked: t.directives_checked || {
+            supabaseSchema: false,
+            rlsStrict: false,
+            securityAuth: false,
+            aiStreaming: false,
+            rgpdLegal: false,
+            driveSync: false
+          },
+          attachments: Array.isArray(t.attachments) ? t.attachments : [],
+          comments: Array.isArray(t.comments) ? t.comments : [],
+          activities: Array.isArray(t.activities) ? t.activities : [],
+          customFields: t.custom_fields || {},
+          aiPromptSnippet: t.ai_prompt_snippet,
+          origin: t.origin || 'manual_admin',
+          reportedBy: t.reported_by,
+          reportType: t.report_type,
+          deviceInfo: t.device_info,
+          createdAt: t.created_at || new Date().toISOString()
         }));
-        storageService.saveTasks(formattedTasks);
+        storageService.saveTasks(formattedTasks, false);
       }
 
       return { success: true };
@@ -146,7 +164,9 @@ export const supabaseSyncService = {
           color: p.color,
           icon: p.icon,
           supabase_schema: p.supabaseSchema,
-          drive_folder_url: p.driveFolderUrl
+          drive_folder_url: p.driveFolderUrl,
+          google_notebook_url: p.googleNotebookUrl,
+          research_insights: p.researchInsights
         }));
         const { error } = await supabase.from('projects').upsert(rows);
         if (error) throw error;
@@ -176,11 +196,21 @@ export const supabaseSyncService = {
           priority: t.priority,
           assigned_to: t.assignedTo,
           assigned_avatar: t.assignedAvatar,
-          due_date: t.dueDate,
-          start_date: t.startDate,
-          estimated_hours: t.estimatedHours,
-          tags: t.tags,
-          directives_checked: t.directivesChecked
+          due_date: t.dueDate || null,
+          start_date: t.startDate || null,
+          estimated_hours: t.estimatedHours || 0,
+          subtasks: t.subtasks || [],
+          tags: t.tags || [],
+          directives_checked: t.directivesChecked || {},
+          attachments: t.attachments || [],
+          comments: t.comments || [],
+          activities: t.activities || [],
+          custom_fields: t.customFields || {},
+          ai_prompt_snippet: t.aiPromptSnippet,
+          origin: t.origin,
+          reported_by: t.reportedBy,
+          report_type: t.reportType,
+          device_info: t.deviceInfo
         }));
         const { error } = await supabase.from('tasks').upsert(tRows);
         if (error) throw error;

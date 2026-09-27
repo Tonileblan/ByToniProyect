@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Project, Section, Task, DirectiveItem, ViewTab, FilterOptions, TaskStatus, TaskPriority, UserProfile } from './types/project';
 import { storageService, DEFAULT_USER } from './services/storageService';
+import { supabaseService, SyncStatus } from './services/supabaseService';
 import { feedbackService, AppFeedbackPayload } from './services/feedbackService';
 import { TopNavbar } from './components/layout/TopNavbar';
 import { Sidebar } from './components/layout/Sidebar';
@@ -52,7 +53,58 @@ export function App() {
     tag: 'all'
   });
 
-  // Hydrate from Storage on mount if needed
+  // Cloud Sync State
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('syncing');
+  const [syncMessage, setSyncMessage] = useState<string>('Comprobando base de datos Supabase...');
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
+
+  // Sync Logic with Supabase (Bidirectional & Optimistic)
+  const syncWithSupabase = async (isManual = false) => {
+    if (isManual) {
+      setSyncStatus('syncing');
+      setSyncMessage('Sincronizando con Supabase...');
+    }
+
+    try {
+      const currentLocal = {
+        projects: storageService.getProjects(),
+        sections: storageService.getSections(),
+        tasks: storageService.getTasks(),
+        directives: storageService.getDirectives()
+      };
+
+      const syncResult = await supabaseService.syncAll(currentLocal);
+
+      if (syncResult.success && syncResult.data) {
+        if (syncResult.source === 'remote') {
+          setProjects(syncResult.data.projects);
+          setSections(syncResult.data.sections);
+          setTasks(syncResult.data.tasks);
+          setDirectives(syncResult.data.directives);
+
+          storageService.saveProjects(syncResult.data.projects, false);
+          storageService.saveSections(syncResult.data.sections, false);
+          storageService.saveTasks(syncResult.data.tasks, false);
+          storageService.saveDirectives(syncResult.data.directives, false);
+        }
+        setSyncStatus('synced');
+        setSyncMessage(syncResult.message);
+        setLastSynced(new Date());
+      } else {
+        if (syncResult.message.includes('esquema') || syncResult.message.includes('schema') || syncResult.message.includes('PGRST106')) {
+          setSyncStatus('pending_schema');
+        } else {
+          setSyncStatus('offline');
+        }
+        setSyncMessage(syncResult.message);
+      }
+    } catch (e: any) {
+      setSyncStatus('offline');
+      setSyncMessage(e?.message || 'Modo local activo.');
+    }
+  };
+
+  // Hydrate from Storage on mount and start Supabase Sync
   useEffect(() => {
     const loadedProjects = storageService.getProjects();
     const loadedSections = storageService.getSections();
@@ -65,6 +117,18 @@ export function App() {
     if (loadedTasks && loadedTasks.length > 0) setTasks(loadedTasks);
     if (loadedDirectives && loadedDirectives.length > 0) setDirectives(loadedDirectives);
     if (savedActiveProjId) setActiveProjectId(savedActiveProjId);
+
+    // Initial remote sync
+    syncWithSupabase();
+
+    // Listen to real-time Postgres changes
+    const unsubscribe = supabaseService.subscribeToChanges(() => {
+      syncWithSupabase();
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Sync changes to storage
@@ -182,18 +246,33 @@ export function App() {
       if (t.id === taskId) {
         const nextStatus: TaskStatus = t.status === 'completed' ? 'in_development' : 'completed';
         if (nextStatus === 'completed') triggerCelebration();
-        return { ...t, status: nextStatus };
+        return {
+          ...t,
+          status: nextStatus,
+          activities: [
+            ...t.activities,
+            { id: `act_${Date.now()}`, user: 'Toni', action: `Cambió estado a ${nextStatus}`, timestamp: new Date().toISOString() }
+          ]
+        };
       }
       return t;
     }));
   };
 
-  const handleUpdateTaskStatus = (taskId: string, status: TaskStatus) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
-  };
-
   const handleUpdateTaskPriority = (taskId: string, priority: TaskPriority) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, priority } : t));
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        return {
+          ...t,
+          priority,
+          activities: [
+            ...t.activities,
+            { id: `act_${Date.now()}`, user: 'Toni', action: `Cambió prioridad a ${priority}`, timestamp: new Date().toISOString() }
+          ]
+        };
+      }
+      return t;
+    }));
   };
 
   const handleAddTaskToSection = (sectionId: string, title: string) => {
@@ -455,6 +534,10 @@ ${activeProject.coreFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
           onToggleTheme={toggleTheme}
           isSidebarOpen={isSidebarOpen}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          syncStatus={syncStatus}
+          syncMessage={syncMessage}
+          lastSynced={lastSynced}
+          onManualSync={() => syncWithSupabase(true)}
         />
 
         {/* Project Header (when in project view) */}

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { 
-  Search, Plus, Sparkles, Moon, Sun, Bell, 
+  Search, Plus, Sparkles, Moon, Sun,
   FolderPlus, CheckSquare, BookOpen, ExternalLink,
-  HelpCircle, MessageSquare, Menu, Settings, LogOut, ChevronDown, User
+  HelpCircle, Menu, Settings, LogOut, ChevronDown,
+  Cloud, CloudOff, RefreshCw, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import { Project, UserProfile } from '../../types/project';
+import { SyncStatus } from '../../services/supabaseService';
 
 interface TopNavbarProps {
   currentProject: Project | null;
@@ -23,6 +25,10 @@ interface TopNavbarProps {
   onToggleTheme: () => void;
   isSidebarOpen?: boolean;
   onToggleSidebar?: () => void;
+  syncStatus?: SyncStatus;
+  syncMessage?: string;
+  lastSynced?: Date | null;
+  onManualSync?: () => void;
 }
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({
@@ -41,11 +47,58 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   theme,
   onToggleTheme,
   isSidebarOpen,
-  onToggleSidebar
+  onToggleSidebar,
+  syncStatus = 'synced',
+  syncMessage,
+  lastSynced,
+  onManualSync
 }) => {
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
+  const [showSyncTooltip, setShowSyncTooltip] = useState(false);
+
+  // Status visual configurations
+  const getSyncBadge = () => {
+    switch (syncStatus) {
+      case 'syncing':
+        return {
+          icon: <RefreshCw size={13} className="spin-animation" color="#60A5FA" />,
+          label: 'Sincronizando...',
+          color: '#60A5FA',
+          bg: 'rgba(59, 130, 246, 0.12)',
+          border: 'rgba(59, 130, 246, 0.3)'
+        };
+      case 'synced':
+        return {
+          icon: <CheckCircle2 size={13} color="#10B981" />,
+          label: 'Supabase Online',
+          color: '#10B981',
+          bg: 'rgba(16, 185, 129, 0.12)',
+          border: 'rgba(16, 185, 129, 0.3)'
+        };
+      case 'pending_schema':
+        return {
+          icon: <AlertCircle size={13} color="#F59E0B" />,
+          label: 'Esquema Pendiente',
+          color: '#F59E0B',
+          bg: 'rgba(245, 158, 11, 0.12)',
+          border: 'rgba(245, 158, 11, 0.3)'
+        };
+      case 'error':
+      case 'offline':
+      default:
+        return {
+          icon: <CloudOff size={13} color="#94A3B8" />,
+          label: 'Modo Local (Offline)',
+          color: '#94A3B8',
+          bg: 'rgba(148, 163, 184, 0.12)',
+          border: 'rgba(148, 163, 184, 0.3)'
+        };
+    }
+  };
+
+  const syncBadge = getSyncBadge();
 
   return (
     <header style={{
@@ -259,7 +312,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
       {/* Center: Global Search Bar */}
       <div style={{ 
-        flex: '0 1 400px', 
+        flex: '0 1 360px', 
         position: 'relative',
         display: 'flex',
         alignItems: 'center'
@@ -282,8 +335,82 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         />
       </div>
 
-      {/* Right: Actions, Help Chat, AI Copilot, Theme & Profile */}
+      {/* Right: Cloud Sync Badge, Help Chat, AI Copilot, Theme & Profile */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Cloud Sync Status Badge */}
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => {
+              if (onManualSync) onManualSync();
+              setShowSyncTooltip(!showSyncTooltip);
+            }}
+            onMouseEnter={() => setShowSyncTooltip(true)}
+            onMouseLeave={() => setShowSyncTooltip(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '5px 10px',
+              borderRadius: 'var(--radius-full)',
+              background: syncBadge.bg,
+              border: `1px solid ${syncBadge.border}`,
+              color: syncBadge.color,
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            title="Estado de sincronización en la nube (Haz clic para sincronizar ahora)"
+          >
+            {syncBadge.icon}
+            <span>{syncBadge.label}</span>
+          </button>
+
+          {/* Sync Tooltip */}
+          {showSyncTooltip && (
+            <div style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              width: '260px',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-medium)',
+              borderRadius: 'var(--radius-md)',
+              padding: '10px 12px',
+              boxShadow: 'var(--shadow-lg)',
+              zIndex: 110,
+              fontSize: '11px',
+              color: 'var(--text-secondary)'
+            }}>
+              <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Cloud size={14} color="#6366F1" />
+                <span>Sincronización Supabase</span>
+              </div>
+              <p style={{ margin: '0 0 6px 0', lineHeight: '1.4' }}>
+                {syncMessage || (syncStatus === 'synced' ? 'Tus proyectos y tareas se respaldan en tiempo real en Supabase con esquema aislado.' : 'Trabajando en modo local (localStorage).')}
+              </p>
+              {lastSynced && (
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  Última sincronización: {lastSynced.toLocaleTimeString()}
+                </div>
+              )}
+              {onManualSync && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onManualSync();
+                  }}
+                  className="btn btn-secondary"
+                  style={{ width: '100%', padding: '4px 8px', fontSize: '11px', justifyContent: 'center', gap: '6px' }}
+                >
+                  <RefreshCw size={12} />
+                  <span>Forzar Sincronización</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Help Chat & Feedback Button */}
         {onOpenHelpChat && (
           <button 
