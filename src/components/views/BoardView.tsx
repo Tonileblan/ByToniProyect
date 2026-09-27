@@ -444,11 +444,13 @@ export const BoardView: React.FC<BoardViewProps> = ({
               }}
               style={{
                 flex: '0 0 310px',
-                background: isColumnHovered ? 'rgba(99, 102, 241, 0.12)' : 'var(--bg-secondary)',
+                background: isColumnHovered ? 'rgba(99, 102, 241, 0.08)' : 'var(--bg-glass)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
                 border: isColumnReorderHovered
-                  ? '2px solid #EC4899'
+                  ? '1px solid #EC4899'
                   : isColumnHovered 
-                  ? '2px dashed var(--accent-primary)' 
+                  ? '1px dashed var(--accent-primary)' 
                   : '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-lg)',
                 display: 'flex',
@@ -456,7 +458,8 @@ export const BoardView: React.FC<BoardViewProps> = ({
                 maxHeight: 'calc(100vh - 250px)',
                 overflow: 'hidden',
                 opacity: isColumnBeingDragged ? 0.35 : 1,
-                transform: isColumnReorderHovered ? 'scale(1.02)' : 'none',
+                transform: isColumnReorderHovered ? 'scale(1.01)' : 'none',
+                boxShadow: 'var(--shadow-xs)',
                 transition: 'all var(--transition-fast)'
               }}
             >

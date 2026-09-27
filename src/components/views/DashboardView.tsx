@@ -29,11 +29,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ project, tasks, di
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: '16px'
       }}>
-        <div style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-medium)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '16px',
+        <div className="glass-card" style={{
+          padding: '18px',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px'
@@ -53,11 +50,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ project, tasks, di
           </span>
         </div>
 
-        <div style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-medium)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '16px',
+        <div className="glass-card" style={{
+          padding: '18px',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px'
@@ -74,11 +68,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ project, tasks, di
           </span>
         </div>
 
-        <div style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-medium)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '16px',
+        <div className="glass-card" style={{
+          padding: '18px',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px'
@@ -95,11 +86,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ project, tasks, di
           </span>
         </div>
 
-        <div style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-medium)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '16px',
+        <div className="glass-card" style={{
+          padding: '18px',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px'

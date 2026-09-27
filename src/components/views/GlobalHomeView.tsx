@@ -83,10 +83,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '16px'
       }}>
-        <div style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-lg)',
+        <div className="glass-card" style={{
           padding: '16px',
           display: 'flex',
           flexDirection: 'column',
@@ -103,10 +100,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
           </span>
         </div>
 
-        <div style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-lg)',
+        <div className="glass-card" style={{
           padding: '16px',
           display: 'flex',
           flexDirection: 'column',
@@ -123,10 +117,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
           </span>
         </div>
 
-        <div style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-lg)',
+        <div className="glass-card" style={{
           padding: '16px',
           display: 'flex',
           flexDirection: 'column',
@@ -143,10 +134,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
           </span>
         </div>
 
-        <div style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-lg)',
+        <div className="glass-card" style={{
           padding: '16px',
           display: 'flex',
           flexDirection: 'column',
@@ -182,25 +170,14 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
             <div
               key={proj.id}
               onClick={() => onSelectProject(proj.id)}
+              className="glass-card"
               style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-lg)',
                 padding: '20px',
                 cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 gap: '12px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-highlight)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               <div>
@@ -261,25 +238,14 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
             <div
               key={proj.id}
               onClick={() => onSelectProject(proj.id)}
+              className="glass-card"
               style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-lg)',
                 padding: '20px',
                 cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 gap: '12px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-highlight)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               <div>
@@ -341,25 +307,14 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
               <div
                 key={proj.id}
                 onClick={() => onSelectProject(proj.id)}
+                className="glass-card"
                 style={{
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-lg)',
                   padding: '20px',
                   cursor: 'pointer',
-                  transition: 'all var(--transition-fast)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                   gap: '12px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-highlight)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
                 <div>
