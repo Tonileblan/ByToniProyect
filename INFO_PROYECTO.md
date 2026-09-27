@@ -3,7 +3,8 @@
 > **Ubicación Google Drive:** `Google Drive > Mi unidad > 1-Proyectos > Apps-Desarrollo > ByToniProyect`  
 > **Slug / Código:** `mia_bytoniproyect`  
 > **Categoría:** Suite Toni (Propio / I+D)  
-> **Estado:** En Desarrollo  
+> **Estado:** En Producción (Vercel)  
+> **URL Producción:** [https://bytoniproyect.vercel.app](https://bytoniproyect.vercel.app)  
 > **Base de Datos:** Supabase PostgreSQL (`mia_bytoniproyect`)  
 > **Directrices Maestras Drive:** [Carpeta de Directrices](https://drive.google.com/drive/folders/1lWPlfQ3KtLijHklYE0O993J-HwQInjZW)
 
