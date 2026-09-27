@@ -211,6 +211,34 @@ export const storageService = {
     return JSON.stringify(backup, null, 2);
   },
 
+  importAllDataFromJSON(jsonString: string): boolean {
+    try {
+      const parsed = JSON.parse(jsonString);
+      if (parsed.projects && Array.isArray(parsed.projects)) {
+        this.saveProjects(parsed.projects);
+      }
+      if (parsed.sections && Array.isArray(parsed.sections)) {
+        this.saveSections(parsed.sections);
+      }
+      if (parsed.tasks && Array.isArray(parsed.tasks)) {
+        this.saveTasks(parsed.tasks);
+      }
+      if (parsed.directives && Array.isArray(parsed.directives)) {
+        this.saveDirectives(parsed.directives);
+      }
+      if (parsed.settings) {
+        this.saveSettings(parsed.settings);
+      }
+      if (parsed.user) {
+        this.saveUser(parsed.user);
+      }
+      return true;
+    } catch (e) {
+      console.error('Error importing backup JSON:', e);
+      return false;
+    }
+  },
+
   // --- Generated Reports per Project ---
   getProjectReports(projectId: string): { id: string; type: string; date: string; content: string }[] {
     try {

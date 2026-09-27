@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Key, Sparkles, User, FileCode2, Save, RotateCcw, 
-  Check, CheckCircle2, Shield, Download, RefreshCw, AlertCircle, Eye, EyeOff,
+  Check, CheckCircle2, Shield, Download, Upload, RefreshCw, AlertCircle, Eye, EyeOff,
   Palette, Map, ShieldCheck, MessageSquare, Layers
 } from 'lucide-react';
 import { UserProfile, UserSettings, ReportPromptsConfig } from '../../types/project';
@@ -137,6 +137,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     a.download = `ByToniProyect_Backup_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     showToast('📦 Respaldo descargado con éxito');
+  };
+
+  const handleUploadBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        const success = storageService.importAllDataFromJSON(content);
+        if (success) {
+          showToast('✅ Datos importados correctamente. Recargando...');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1200);
+        } else {
+          showToast('❌ Error: El archivo JSON no tiene un formato válido');
+        }
+      }
+    };
+    reader.readAsText(file);
   };
 
   const promptOptions: { key: keyof ReportPromptsConfig; title: string; objective: string; icon: any; color: string }[] = [
@@ -664,13 +686,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 <div>
                   <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 6px 0', color: 'var(--text-primary)' }}>
-                    Exportación y Respaldo
+                    Exportación e Importación de Datos
                   </h3>
                   <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
-                    Descarga una copia completa en formato JSON de todos tus proyectos, tareas, directrices y configuraciones.
+                    Transfiere fácilmente todos tus proyectos, tareas, directrices y configuraciones entre tu PC con Windows y tu Mac.
                   </p>
                 </div>
 
+                {/* Export Card */}
                 <div style={{
                   background: 'var(--bg-tertiary)',
                   border: '1px solid var(--border-subtle)',
@@ -683,21 +706,64 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 }}>
                   <div>
                     <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      Copia de Seguridad Completa (.json)
+                      Exportar Copia de Seguridad (.json)
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      Incluye proyectos, tareas, secciones, directrices y los 5 prompts informes configurados.
+                      Descarga un archivo con todos los proyectos (incluido Pájaros y otros nuevos), tareas y ajustes.
                     </div>
                   </div>
 
                   <button 
                     onClick={handleDownloadBackup}
                     className="btn btn-primary"
-                    style={{ padding: '8px 16px', fontSize: '12px', gap: '8px' }}
+                    style={{ padding: '8px 16px', fontSize: '12px', gap: '8px', flexShrink: 0 }}
                   >
                     <Download size={14} />
                     <span>Exportar JSON</span>
                   </button>
+                </div>
+
+                {/* Import Card */}
+                <div style={{
+                  background: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      Importar Copia de Seguridad (.json)
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      Carga un archivo JSON exportado desde tu otra máquina para sincronizar al instante.
+                    </div>
+                  </div>
+
+                  <label 
+                    className="btn btn-secondary"
+                    style={{ 
+                      padding: '8px 16px', 
+                      fontSize: '12px', 
+                      gap: '8px', 
+                      cursor: 'pointer', 
+                      flexShrink: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <Upload size={14} />
+                    <span>Importar JSON</span>
+                    <input 
+                      type="file" 
+                      accept=".json,application/json" 
+                      onChange={handleUploadBackup}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
                 </div>
               </div>
             )}
